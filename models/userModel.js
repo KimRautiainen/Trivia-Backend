@@ -93,7 +93,7 @@ const getUserLogin = async (email) => {
     try {
         console.log(email);
         const [rows] = await promisePool.execute(
-            'SELECT * FROM Työntekijä WHERE sähköposti = ?;',
+            'SELECT * FROM User WHERE email = ?;',
             [email]);
         console.log('get user login rows', rows);
         return rows;

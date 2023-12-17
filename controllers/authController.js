@@ -4,18 +4,18 @@ const passport = require("passport");
 require("dotenv").config();
 
 const login = (req, res) => {
-    console.log(req.body)
+    console.log("login req.body", req.body)
     passport.authenticate('local', {session: false}, (err, user, info) => {
         if (err || !user) {
-           console.log(info);
-            console.log(user);
+           console.log("info: ", info);
+            console.log("user: ", user);
             return res.status(400).json({
                 message: 'Username / password wrong',
             });
         }
         req.login(user, {session: false}, (err) => {
             if (err) {
-                res.json({message: err});
+                res.json({message: err, errorloaction: "login"});
             }
             // generate a signed json web token with the contents of user object and return it in the response
             const token = jwt.sign(user, process.env.JWT_SECRET);
