@@ -102,6 +102,23 @@ const getUserLogin = async (email) => {
     }
 };
 
+// User Level Models
+
+const addUserXp = async (userId, xp) => {
+    try {
+        const sql =`UPDATE User SET experiencePoints=experiencePoints+? where userId=?`;
+        const [rows] = await promisePool.query(sql,[
+            xp,
+            userId
+        ]);
+        return rows
+    } catch (e) {
+        console.error("error", e.message);
+        throw new Error('sql update user xp failed');
+    }
+};
+
+
 
 module.exports = {
     getAllUsers,
@@ -110,4 +127,6 @@ module.exports = {
     modifyUser,
     deleteUser,
     getUserLogin,
+    addUserXp,
+
 };

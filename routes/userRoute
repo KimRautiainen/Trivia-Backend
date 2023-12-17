@@ -17,4 +17,7 @@ router.route('/:userId')
     .get(userController.getUser)
     .delete(userController.deleteUser)
 
+router.route('/:userId/levels')
+    .put(userController.putUserXp)    //  "/user/req.params.userId/levels"
+    
 module.exports = router;
