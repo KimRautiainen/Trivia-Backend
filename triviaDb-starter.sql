@@ -1,4 +1,5 @@
 CREATE DATABASE triviaDb;
+USE triviaDb;
 -- Create the User table with additional columns for experience points and level
 CREATE TABLE `User`
 (
