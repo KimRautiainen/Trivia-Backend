@@ -186,6 +186,16 @@ const insertUserAchievement = async (userId, achievementId) => {
     throw new Error("sql query failed");
   }
 };
+const updateAchievementProgress = async (userId, achievementId, progress) => {
+  try {
+    const sql = `UPDATE UserAchievement SET progress=? WHERE userId=? AND achievementId=?`;
+    const [rows] = await promisePool.query(sql, [progress, userId, achievementId]);
+    return rows;
+  } catch (e) {
+    console.error("error", e.message);
+    throw new Error("sql query failed");
+  }
+};
 
 module.exports = {
   getAllUsers,
@@ -200,4 +210,5 @@ module.exports = {
   getAllAchievements,
   getUserAchievements,
   insertUserAchievement,
+  updateAchievementProgress,
 };

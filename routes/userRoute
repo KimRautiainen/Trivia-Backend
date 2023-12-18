@@ -15,7 +15,7 @@ router.route('/:userId/levels')
 router.route('/:userId/userAchievements')
 .get(userController.getUserAchievements)
 .post(userController.postUserAchievements)
-//.post(userController.postUserAchievements)   
+.put(userController.putUserAchievements)    //  "/user/req.params.userId/userAchievements"
 
 // Achievement routes
 router.route('/achievements')
