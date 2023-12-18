@@ -6,6 +6,21 @@ const multer = require("multer");
 const upload = multer({dest: 'uploads'});
 
 
+
+// user level and xp routes    
+router.route('/:userId/levels')
+.put(userController.putUserXp)    //  "/user/req.params.userId/levels"
+
+// User achievements routes
+router.route('/:userId/userAchievements')
+.get(userController.getUserAchievements)
+.post(userController.postUserAchievements)
+//.post(userController.postUserAchievements)   
+
+// Achievement routes
+router.route('/achievements')
+.get(userController.getAllAchievements)   
+
 router.route('/')
     .get( userController.getUserList)
     .post(upload.single('user'),userController.postUser)
