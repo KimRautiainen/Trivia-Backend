@@ -39,14 +39,6 @@ const insertUser = async (user) => {
       user.level,
       user.maxXp,
     ]);
-    /* const sql2 =` INSERT INTO Media VALUES (?, ?, ?, ?)`;
-        const [rows2] = await promisePool.query(sql2,[
-            null,
-            user.filename,
-            user.id,
-            null
-
-        ]); */
     return rows;
   } catch (e) {
     console.error("error", e.message);
