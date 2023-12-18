@@ -12,6 +12,7 @@ CREATE TABLE `User`
   `password` TEXT NOT NULL,
   `experiencePoints` INT DEFAULT 0,
   `level` INT DEFAULT 1,
+  `maxXp` INT DEFAULT 100,
   PRIMARY KEY (`userId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

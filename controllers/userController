@@ -45,6 +45,7 @@ const postUser = async (req,res) => {
         password: password,
         experiencePoints: 0,
         level: 1,
+        maxXp: 100,
     };
     try {
         // Call the insertUser method on the userModel object with the new user object as the argument and store the result
