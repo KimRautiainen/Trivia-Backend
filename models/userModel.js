@@ -186,15 +186,28 @@ const insertUserAchievement = async (userId, achievementId) => {
     throw new Error("sql query failed");
   }
 };
+
+const getAchievementProgress = async (userId, achievementId) => {
+  const sql = `SELECT * FROM AchievementProgress 
+               WHERE userId = ? AND achievementId = ?`;
+  const [rows] = await promisePool.query(sql, [userId, achievementId]);
+  return rows[0];
+};
+
 const updateAchievementProgress = async (userId, achievementId, progress) => {
-  try {
-    const sql = `UPDATE UserAchievement SET progress=? WHERE userId=? AND achievementId=?`;
-    const [rows] = await promisePool.query(sql, [progress, userId, achievementId]);
-    return rows;
-  } catch (e) {
-    console.error("error", e.message);
-    throw new Error("sql query failed");
-  }
+  const sql = `INSERT INTO AchievementProgress (userId, achievementId, progress)
+               VALUES (?, ?, ?)
+               ON DUPLICATE KEY UPDATE progress = ?`;
+  const [result] = await promisePool.query(sql, [userId, achievementId, progress, progress]);
+  return result;
+};
+
+const completeAchievement = async (userId, achievementId) => {
+  const sql = `UPDATE AchievementProgress 
+               SET isCompleted = TRUE 
+               WHERE userId = ? AND achievementId = ?`;
+  const [result] = await promisePool.query(sql, [userId, achievementId]);
+  return result;
 };
 
 module.exports = {
@@ -210,5 +223,7 @@ module.exports = {
   getAllAchievements,
   getUserAchievements,
   insertUserAchievement,
+  getAchievementProgress,
   updateAchievementProgress,
+  completeAchievement,
 };

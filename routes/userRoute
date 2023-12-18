@@ -1,35 +1,48 @@
-'use strict';
-const express = require('express');
+"use strict";
+const express = require("express");
 const router = express.Router();
-const userController = require('../controllers/userController');
+const userController = require("../controllers/userController");
 const multer = require("multer");
-const upload = multer({dest: 'uploads'});
+const upload = multer({ dest: "uploads" });
 
+// Routes for achievement progress
+router.get(
+  "/:userId/achievements/:achievementId/progress",
+  userController.getUserAchievementProgress
+);
+router.put(
+  "/:userId/achievements/:achievementId/progress",
+  userController.updateUserAchievementProgress
+);
+router.post(
+  "/:userId/achievements/:achievementId/complete",
+  userController.completeUserAchievement
+);
 
-
-// user level and xp routes    
-router.route('/:userId/levels')
-.put(userController.putUserXp)    //  "/user/req.params.userId/levels"
+// user level and xp routes
+router.route("/:userId/levels").put(userController.putUserXp); //  "/user/req.params.userId/levels"
 
 // User achievements routes
-router.route('/:userId/userAchievements')
-.get(userController.getUserAchievements)
-.post(userController.postUserAchievements)
-.put(userController.putUserAchievements)    //  "/user/req.params.userId/userAchievements"
+router
+  .route("/:userId/userAchievements")
+  .get(userController.getUserAchievements)
+  .post(userController.postUserAchievements)
+  //.put(userController.putUserAchievements); //  "/user/req.params.userId/userAchievements"
 
 // Achievement routes
-router.route('/achievements')
-.get(userController.getAllAchievements)   
+router.route("/achievements").get(userController.getAllAchievements);
 
-router.route('/')
-    .get( userController.getUserList)
-    .post(upload.single('user'),userController.postUser)
-    .put(upload.single('user'),userController.putUser)
+router
+  .route("/")
+  .get(userController.getUserList)
+  .post(upload.single("user"), userController.postUser)
+  .put(upload.single("user"), userController.putUser);
 
-router.get('/token', userController.checkToken);
+router.get("/token", userController.checkToken);
 
-router.route('/:userId')
-    .get(userController.getUser)
-    .delete(userController.deleteUser)
+router
+  .route("/:userId")
+  .get(userController.getUser)
+  .delete(userController.deleteUser);
 
 module.exports = router;

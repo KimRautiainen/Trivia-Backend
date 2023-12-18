@@ -182,33 +182,52 @@ const postUserAchievements = async (req, res) => {
     res.status(500).json({ message: "Error adding achievement" });
   }
 };
-const putUserAchievements = async (req, res) => {
-  // Assuming you're passing userId and achievementId in the request body
-  // Validate and sanitize these inputs as necessary
-  const achievementId = req.body.achievementId;
-  const userId = req.params.userId;
-  const progress = req.body.progress;
-  // Basic validation
-  if (!userId || !achievementId) {
-    res.status(400).json({ message: "Missing userId or achievementId" });
-    return;
-  }
 
+// Achievement progress controlling
+
+const getUserAchievementProgress = async (req, res) => {
   try {
-    // Call the model function
-    const result = await userModel.insertUserAchievement(
+    const userId = req.params.userId; // Validate and sanitize this
+    const achievementId = req.params.achievementId; // Validate and sanitize this
+    const progress = await userModel.getAchievementProgress(
+      userId,
+      achievementId
+    );
+    res.json(progress);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const updateUserAchievementProgress = async (req, res) => {
+  try {
+    const userId = req.params.userId; // Validate and sanitize this
+    const achievementId = req.params.achievementId; // Validate and sanitize this
+    const { progress } = req.body; // Validate and sanitize this
+    const result = await userModel.updateAchievementProgress(
       userId,
       achievementId,
       progress
     );
-
-    // If the insertion is successful, result should contain information about the operation
-    // You can customize the response based on your requirement
-    res.status(201).json({ message: "Achievement added successfully", result });
+    res.status(200).json({ message: "Progress updated successfully", result });
   } catch (error) {
-    // Handle specific errors (e.g., duplicate entry) based on your application logic
-    console.error("Error in insertUserAchievementController", error.message);
-    res.status(500).json({ message: "Error adding achievement" });
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const completeUserAchievement = async (req, res) => {
+  try {
+    const userId = req.params.userId; // Validate and sanitize this
+    const achievementId = req.params.achievementId; // Validate and sanitize this
+    const result = await userModel.completeAchievement(
+      userId,
+      achievementId
+    );
+    res
+      .status(200)
+      .json({ message: "Achievement completed successfully", result });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -223,6 +242,8 @@ const userController = {
   getUserAchievements,
   getAllAchievements,
   postUserAchievements,
-  putUserAchievements,
+  getUserAchievementProgress,
+  updateUserAchievementProgress,
+  completeUserAchievement,
 };
 module.exports = userController;
