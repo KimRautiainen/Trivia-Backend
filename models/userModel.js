@@ -105,6 +105,17 @@ const getUserLogin = async (email) => {
 
 // User Level Models
 
+const getUserLevel = async (userId) => {
+  try {
+    const sql = `SELECT level FROM User WHERE userId=?`;
+    const [rows] = await promisePool.query(sql, [userId]);
+    return rows[0];
+  } catch (e) {
+    console.error("error", e.message);
+    throw new Error("sql query failed");
+  }
+};
+
 // add experience points to user and check if user level up
 const addUserXp = async (userId, xp) => {
   try {
@@ -146,6 +157,44 @@ const checkLevelUp = async (userId) => {
     throw new Error("sql query failed");
   }
 };
+
+// Achievement Models
+
+// get all achievements
+const getAllAchievements = async () => {
+  try {
+    const sql = `SELECT * FROM Achievement`;
+    const [rows] = await promisePool.query(sql);
+    return rows;
+  } catch (e) {
+    console.error("error", e.message);
+    throw new Error("sql query failed");
+  }
+};
+
+const getUserAchievements = async (userId) => {
+  try {
+    const sql = `SELECT a.* FROM UserAchievement ua
+    JOIN Achievement a ON ua.achievementId = a.achievementId
+    WHERE ua.userId = ?`;
+    const [rows] = await promisePool.query(sql, [userId]);
+    return rows;
+  } catch (e) {
+    console.error("error", e.message);
+    throw new Error("sql query failed");
+  }
+};
+const insertUserAchievement = async (userId, achievementId) => {
+  try {
+    const sql = `INSERT INTO UserAchievement (userId, achievementId, dateEarned) VALUES (?, ?, NOW())`;
+    const [rows] = await promisePool.query(sql, [userId, achievementId]);
+    return rows;
+  } catch (e) {
+    console.error("error", e.message);
+    throw new Error("sql query failed");
+  }
+};
+
 module.exports = {
   getAllUsers,
   getUserById,
@@ -155,4 +204,8 @@ module.exports = {
   getUserLogin,
   addUserXp,
   checkLevelUp,
+  getUserLevel,
+  getAllAchievements,
+  getUserAchievements,
+  insertUserAchievement,
 };
