@@ -26,11 +26,10 @@ const getUserById = async (id) => {
 
 const insertUser = async (user) => {
   try {
-    const sql = ` INSERT INTO User VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const sql = ` INSERT INTO User VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
     const [rows] = await promisePool.query(sql, [
       null,
-      user.firstName,
-      user.lastName,
+      user.username,
       user.email,
       user.description,
       user.filename,
@@ -187,6 +186,29 @@ const insertUserAchievement = async (userId, achievementId) => {
   }
 };
 
+const getAchievementProgress = async (userId, achievementId) => {
+  const sql = `SELECT * FROM AchievementProgress 
+               WHERE userId = ? AND achievementId = ?`;
+  const [rows] = await promisePool.query(sql, [userId, achievementId]);
+  return rows[0];
+};
+
+const updateAchievementProgress = async (userId, achievementId, progress) => {
+  const sql = `INSERT INTO AchievementProgress (userId, achievementId, progress)
+               VALUES (?, ?, ?)
+               ON DUPLICATE KEY UPDATE progress = ?`;
+  const [result] = await promisePool.query(sql, [userId, achievementId, progress, progress]);
+  return result;
+};
+
+const completeAchievement = async (userId, achievementId) => {
+  const sql = `UPDATE AchievementProgress 
+               SET isCompleted = TRUE 
+               WHERE userId = ? AND achievementId = ?`;
+  const [result] = await promisePool.query(sql, [userId, achievementId]);
+  return result;
+};
+
 module.exports = {
   getAllUsers,
   getUserById,
@@ -200,4 +222,7 @@ module.exports = {
   getAllAchievements,
   getUserAchievements,
   insertUserAchievement,
+  getAchievementProgress,
+  updateAchievementProgress,
+  completeAchievement,
 };

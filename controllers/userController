@@ -41,8 +41,7 @@ const postUser = async (req, res) => {
   const password = await bcrypt.hash(req.body.password, salt);
   // Create a new user object with the user's input values and the generated password and filename
   const newUser = {
-    firstName: req.body.firstName,
-    lastName: req.body.lastName,
+    username: req.body.username,
     email: req.body.email,
     description: req.body.description,
     filename: req.file.filename,
@@ -183,6 +182,54 @@ const postUserAchievements = async (req, res) => {
   }
 };
 
+// Achievement progress controlling
+
+const getUserAchievementProgress = async (req, res) => {
+  try {
+    const userId = req.params.userId; // Validate and sanitize this
+    const achievementId = req.params.achievementId; // Validate and sanitize this
+    const progress = await userModel.getAchievementProgress(
+      userId,
+      achievementId
+    );
+    res.json(progress);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const updateUserAchievementProgress = async (req, res) => {
+  try {
+    const userId = req.params.userId; // Validate and sanitize this
+    const achievementId = req.params.achievementId; // Validate and sanitize this
+    const { progress } = req.body; // Validate and sanitize this
+    const result = await userModel.updateAchievementProgress(
+      userId,
+      achievementId,
+      progress
+    );
+    res.status(200).json({ message: "Progress updated successfully", result });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const completeUserAchievement = async (req, res) => {
+  try {
+    const userId = req.params.userId; // Validate and sanitize this
+    const achievementId = req.params.achievementId; // Validate and sanitize this
+    const result = await userModel.completeAchievement(
+      userId,
+      achievementId
+    );
+    res
+      .status(200)
+      .json({ message: "Achievement completed successfully", result });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const userController = {
   getUserList,
   getUser,
@@ -194,5 +241,8 @@ const userController = {
   getUserAchievements,
   getAllAchievements,
   postUserAchievements,
+  getUserAchievementProgress,
+  updateUserAchievementProgress,
+  completeUserAchievement,
 };
 module.exports = userController;
