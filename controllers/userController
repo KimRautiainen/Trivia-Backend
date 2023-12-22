@@ -41,8 +41,7 @@ const postUser = async (req, res) => {
   const password = await bcrypt.hash(req.body.password, salt);
   // Create a new user object with the user's input values and the generated password and filename
   const newUser = {
-    firstName: req.body.firstName,
-    lastName: req.body.lastName,
+    username: req.body.username,
     email: req.body.email,
     description: req.body.description,
     filename: req.file.filename,

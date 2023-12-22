@@ -4,8 +4,7 @@ USE triviaDb;
 CREATE TABLE `User`
 (
   `userId` INT NOT NULL AUTO_INCREMENT,
-  `firstName` TEXT NOT NULL,
-  `lastName` TEXT NOT NULL,
+  `username` TEXT NOT NULL,
   `email` TEXT NOT NULL,
   `description` TEXT NOT NULL,
   `userAvatar` TEXT NOT NULL,
@@ -66,3 +65,4 @@ CREATE TABLE `AchievementProgress` (
   FOREIGN KEY (`achievementId`) REFERENCES `Achievement` (`achievementId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;    
 --------------------------------------------------------------
+
