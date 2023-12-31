@@ -6,7 +6,6 @@ CREATE TABLE `User`
   `userId` INT NOT NULL AUTO_INCREMENT,
   `username` TEXT NOT NULL,
   `email` TEXT NOT NULL,
-  `description` TEXT NOT NULL,
   `userAvatar` TEXT NOT NULL,
   `password` TEXT NOT NULL,
   `experiencePoints` INT DEFAULT 0,
