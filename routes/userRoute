@@ -32,6 +32,7 @@ router
 // Achievement routes
 router.route("/achievements").get(userController.getAllAchievements);
 
+// User routes
 router
   .route("/")
   .get(userController.getUserList)
@@ -40,6 +41,7 @@ router
 
 router.get("/token", userController.checkToken);
 
+// User routes
 router
   .route("/:userId")
   .get(userController.getUser)

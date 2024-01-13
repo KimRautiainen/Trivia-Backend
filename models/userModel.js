@@ -46,17 +46,14 @@ const insertUser = async (user) => {
 
 const modifyUser = async (userId, user) => {
   try {
-    const sql = `UPDATE Työntekijä SET filename=?, etunimi=?, sukunimi=?, sähköposti=?, ammatti=?, kuvaus=?, salasana=?
-        where tyontekija_id=?`;
+    const sql = `UPDATE User SET filename=?, username=?, email=?, password=?
+        where userId=?`;
     console.log(user);
 
     const [rows] = await promisePool.query(sql, [
       user.filename,
-      user.name,
-      user.surname,
+      user.username,
       user.email,
-      user.profession,
-      user.description,
       user.password,
       userId,
     ]);
