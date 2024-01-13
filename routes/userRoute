@@ -41,7 +41,7 @@ router
 
 router.get("/token", userController.checkToken);
 
-// User routes
+// 
 router
   .route("/:userId")
   .get(userController.getUser)

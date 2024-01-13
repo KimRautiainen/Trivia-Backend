@@ -44,24 +44,31 @@ const insertUser = async (user) => {
   }
 };
 
-const modifyUser = async (userId, user) => {
+const modifyUser = async (userId, userUpdates) => {
   try {
-    const sql = `UPDATE User SET filename=?, username=?, email=?, password=?
-        where userId=?`;
-    console.log(user);
+    // Start with the base SQL query
+    let sql = "UPDATE User SET ";
+    const params = [];
 
-    const [rows] = await promisePool.query(sql, [
-      user.filename,
-      user.username,
-      user.email,
-      user.password,
-      userId,
-    ]);
+    // Dynamically add fields to the SQL query
+    Object.keys(userUpdates).forEach((key, index, array) => {
+      sql += `${key}=?`;
+      sql += index < array.length - 1 ? ", " : " "; // Add a comma between fields, but not after the last field
+      params.push(userUpdates[key]);
+    });
 
+    // Add the WHERE clause to target the specific user
+    sql += "WHERE userId = ?";
+    params.push(userId);
+
+    console.log(sql); // For debugging
+
+    // Execute the query
+    const [rows] = await promisePool.query(sql, params);
     return rows;
   } catch (e) {
     console.error("error", e.message);
-    throw new Error("sql update user failed");
+    throw new Error("SQL update user failed");
   }
 };
 
@@ -193,7 +200,12 @@ const updateAchievementProgress = async (userId, achievementId, progress) => {
   const sql = `INSERT INTO AchievementProgress (userId, achievementId, progress)
                VALUES (?, ?, ?)
                ON DUPLICATE KEY UPDATE progress = ?`;
-  const [result] = await promisePool.query(sql, [userId, achievementId, progress, progress]);
+  const [result] = await promisePool.query(sql, [
+    userId,
+    achievementId,
+    progress,
+    progress,
+  ]);
   return result;
 };
 

@@ -87,9 +87,9 @@ const putUser = async (req, res) => {
     });
 
     if (req.file) {
-      userUpdates.filename = req.file.filename;
+      userUpdates.userAvatar = req.file.filename;
     } else if (req.body.sessionuser) {
-      userUpdates.filename = req.body.sessionuser;
+      userUpdates.userAvatar = req.body.sessionuser;
     }
 
     console.log(
