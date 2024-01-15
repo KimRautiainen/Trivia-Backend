@@ -4,30 +4,34 @@ const router = express.Router();
 const userController = require("../controllers/userController");
 const multer = require("multer");
 const upload = multer({ dest: "uploads" });
+const authorizeUser = require("../middleware/authMiddleware");
 
 // Routes for achievement progress
 router.get(
   "/:userId/achievements/:achievementId/progress",
+  authorizeUser,
   userController.getUserAchievementProgress
 );
 router.put(
   "/:userId/achievements/:achievementId/progress",
+  authorizeUser,
   userController.updateUserAchievementProgress
 );
 router.post(
   "/:userId/achievements/:achievementId/complete",
+  authorizeUser,
   userController.completeUserAchievement
 );
 
 // user level and xp routes
-router.route("/:userId/levels").put(userController.putUserXp); //  "/user/req.params.userId/levels"
+router.route("/:userId/levels").put(authorizeUser, userController.putUserXp); //  "/user/req.params.userId/levels"
 
 // User achievements routes
 router
   .route("/:userId/userAchievements")
-  .get(userController.getUserAchievements)
-  .post(userController.postUserAchievements)
-  //.put(userController.putUserAchievements); //  "/user/req.params.userId/userAchievements"
+  .get(authorizeUser, userController.getUserAchievements)
+  .post(authorizeUser, userController.postUserAchievements);
+//.put(userController.putUserAchievements); //  "/user/req.params.userId/userAchievements"
 
 // Achievement routes
 router.route("/achievements").get(userController.getAllAchievements);
@@ -36,15 +40,23 @@ router.route("/achievements").get(userController.getAllAchievements);
 router
   .route("/")
   .get(userController.getUserList)
-  .post(upload.single("user"), userController.postUser)
-  .put(upload.single("user"), userController.putUser);
+  .post(upload.single("user"), userController.postUser);
+//.put(upload.single("user"), authorizeUser, userController.putUser);
+
+// Modify user
+router.put(
+  "/:userId",
+  authorizeUser,
+  upload.single("user"),
+  userController.putUser
+);
 
 router.get("/token", userController.checkToken);
 
-// 
+//
 router
   .route("/:userId")
-  .get(userController.getUser)
-  .delete(userController.deleteUser);
+  .get(authorizeUser, userController.getUser)
+  .delete(authorizeUser, userController.deleteUser);
 
 module.exports = router;
