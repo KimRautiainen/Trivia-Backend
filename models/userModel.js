@@ -74,7 +74,7 @@ const modifyUser = async (userId, userUpdates) => {
 
 const deleteUser = async (id) => {
   try {
-    const sql = `DELETE FROM Työntekijä where tyontekija_id=?`;
+    const sql = `DELETE FROM User where userId=?`;
     const [rows] = await promisePool.query(sql, [id]);
     return rows;
   } catch (e) {
