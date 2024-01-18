@@ -38,9 +38,11 @@ router
   .get(userController.getUserList)
   .post(upload.single("user"), userController.postUser)
   .put(upload.single("user"), userController.putUser);
-
+// Get user by token
 router.get("/token", userController.checkToken);
-
+// Check if username is taken
+router.get("/username", userController.checkUsername);
+router.get("/email", userController.checkEmail);
 // User routes
 router
   .route("/:userId")

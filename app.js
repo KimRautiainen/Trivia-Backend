@@ -37,4 +37,6 @@ app.use('/auth', authRoute);
 // Use the userRoute for handling user-related routes under the '/user' endpoint, and require authentication using the JWT strategy.
 app.use('/user', passport.authenticate('jwt', {session: false}), userRoute);
 
+
+
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));
