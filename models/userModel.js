@@ -27,26 +27,27 @@ const checkUsername = async (username) => {
   try {
     const sql = `SELECT * FROM User WHERE username = ?`;
     const [rows] = await promisePool.query(sql, [username]);
-    return rows;} catch (e) {
-      console.error("error", e.message);
-      throw new Error("sql query failed");
-    }
-  };
-  const checkEmail = async (email) => {
+    return rows;
+  } catch (e) {
+    console.error("error", e.message);
+    throw new Error("sql query failed");
+  }
+};
+const checkEmail = async (email) => {
   try {
     const sql = `SELECT * FROM User WHERE email = ?`;
     const [rows] = await promisePool.query(sql, [email]);
-    return rows;} catch (e) {
-      console.error("error", e.message);
-      throw new Error("sql query failed");
-    }
-  };
+    return rows;
+  } catch (e) {
+    console.error("error", e.message);
+    throw new Error("sql query failed");
+  }
+};
 
 const insertUser = async (user) => {
   try {
-    const sql = ` INSERT INTO User VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+    const sql = `INSERT INTO User (username, email, userAvatar, password, experiencePoints, level, maxXp) VALUES (?, ?, ?, ?, ?, ?, ?)`;
     const [rows] = await promisePool.query(sql, [
-      null,
       user.username,
       user.email,
       user.filename,
@@ -79,7 +80,7 @@ const modifyUser = async (userId, userUpdates) => {
     sql += "WHERE userId = ?";
     params.push(userId);
 
-    console.log(sql); 
+    console.log(sql);
 
     // Execute the query
     const [rows] = await promisePool.query(sql, params);

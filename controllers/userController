@@ -38,11 +38,25 @@ const getUser = async (req, res) => {
 // Create new user
 const postUser = async (req, res) => {
   console.log("posting user", req.body, req.file);
+
+  // Check if username is already taken
+  const usernameExists = await userModel.checkUsername(req.body.username);
+  if (usernameExists.length > 0) {
+    return res.status(409).json({ message: "Username already taken" });
+  }
+
+  // Check if email is already in use
+  const emailExists = await userModel.checkEmail(req.body.email);
+  if (emailExists.length > 0) {
+    return res.status(409).json({ message: "Email already in use" });
+  }
+
   // Generate a salt with bcrypt
   const salt = await bcrypt.genSalt(10);
   // Hash the user's password using bcrypt and the generated salt
   const password = await bcrypt.hash(req.body.password, salt);
-  // Create a new user object with the user's input values and the generated password and filename
+
+  // Create a new user object with the hashed password and other user details
   const newUser = {
     username: req.body.username,
     email: req.body.email,
@@ -52,12 +66,12 @@ const postUser = async (req, res) => {
     level: 1,
     maxXp: 100,
   };
+
   try {
-    // Call the insertUser method on the userModel object with the new user object as the argument and store the result
+    // Insert the new user into the database
     const result = await userModel.insertUser(newUser);
     res.status(201).json({ message: "User created" });
   } catch (error) {
-    // If there is an error, log the error message and send a 500 status code and error message in JSON format to the client
     console.error("error", error.message);
     res.status(500).json({
       error: 500,
