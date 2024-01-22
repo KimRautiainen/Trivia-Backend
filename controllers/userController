@@ -1,9 +1,9 @@
 "use strict";
 const e = require("express");
-// userController
 const userModel = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 
+// Get all users
 const getUserList = async (req, res) => {
   try {
     const users = await userModel.getAllUsers();
@@ -13,6 +13,7 @@ const getUserList = async (req, res) => {
   }
 };
 
+// Get user by id
 const getUser = async (req, res) => {
   const userId = Number(req.params.userId);
   if (!Number.isInteger(userId)) {
@@ -33,6 +34,8 @@ const getUser = async (req, res) => {
     res.status(404).json({ message: "User not found." });
   }
 };
+
+// Create new user
 const postUser = async (req, res) => {
   console.log("posting user", req.body, req.file);
   // Generate a salt with bcrypt
@@ -62,6 +65,8 @@ const postUser = async (req, res) => {
     });
   }
 };
+
+// Modify user
 const putUser = async (req, res) => {
   try {
     const userId = req.params.userId;
@@ -107,6 +112,8 @@ const putUser = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+// Delete user
 const deleteUser = async (req, res) => {
   try {
     const result = await userModel.deleteUser(req.params.userId);
@@ -119,6 +126,7 @@ const deleteUser = async (req, res) => {
   }
 };
 
+// Check token
 const checkToken = (req, res) => {
   res.json({ user: req.user });
 };
@@ -127,6 +135,7 @@ const checkToken = (req, res) => {
 
 const getUserLevel = async (req, res) => {};
 const putUserLevel = async (req, res) => {};
+// Add xp to user
 const putUserXp = async (req, res) => {
   try {
     const result = await userModel.addUserXp(req.params.userId, req.body.xp);
@@ -168,9 +177,9 @@ const getUserAchievements = async (req, res) => {
     }
   }
 };
+
+// Add achievement to user
 const postUserAchievements = async (req, res) => {
-  // Assuming you're passing userId and achievementId in the request body
-  // Validate and sanitize these inputs as necessary
   const achievementId = req.body.achievementId;
   const userId = req.params.userId;
   // Basic validation
@@ -180,14 +189,9 @@ const postUserAchievements = async (req, res) => {
   }
 
   try {
-    // Call the model function
     const result = await userModel.insertUserAchievement(userId, achievementId);
-
-    // If the insertion is successful, result should contain information about the operation
-    // You can customize the response based on your requirement
     res.status(201).json({ message: "Achievement added successfully", result });
   } catch (error) {
-    // Handle specific errors (e.g., duplicate entry) based on your application logic
     console.error("Error in insertUserAchievementController", error.message);
     res.status(500).json({ message: "Error adding achievement" });
   }
@@ -195,6 +199,7 @@ const postUserAchievements = async (req, res) => {
 
 // Achievement progress controlling
 
+// Get progress of a specific achievement
 const getUserAchievementProgress = async (req, res) => {
   try {
     const userId = req.params.userId; // Validate and sanitize this
@@ -209,6 +214,7 @@ const getUserAchievementProgress = async (req, res) => {
   }
 };
 
+// Update progress of a specific achievement
 const updateUserAchievementProgress = async (req, res) => {
   try {
     const userId = req.params.userId; // Validate and sanitize this
@@ -225,6 +231,7 @@ const updateUserAchievementProgress = async (req, res) => {
   }
 };
 
+// Complete a specific achievement
 const completeUserAchievement = async (req, res) => {
   try {
     const userId = req.params.userId; // Validate and sanitize this
