@@ -61,7 +61,7 @@ const modifyUser = async (userId, userUpdates) => {
     sql += "WHERE userId = ?";
     params.push(userId);
 
-    console.log(sql); // For debugging
+    console.log(sql); 
 
     // Execute the query
     const [rows] = await promisePool.query(sql, params);
