@@ -64,7 +64,7 @@ const postUser = async (req, res) => {
 };
 const putUser = async (req, res) => {
   try {
-    const userId = req.body.id;
+    const userId = req.params.userId;
     if (!userId) {
       return res.status(400).json({ message: "User ID is required" });
     }
@@ -87,9 +87,9 @@ const putUser = async (req, res) => {
     });
 
     if (req.file) {
-      userUpdates.filename = req.file.filename;
+      userUpdates.userAvatar = req.file.filename;
     } else if (req.body.sessionuser) {
-      userUpdates.filename = req.body.sessionuser;
+      userUpdates.userAvatar = req.body.sessionuser;
     }
 
     console.log(
