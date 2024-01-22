@@ -64,4 +64,19 @@ CREATE TABLE `AchievementProgress` (
   FOREIGN KEY (`achievementId`) REFERENCES `Achievement` (`achievementId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;    
 --------------------------------------------------------------
+-- Add columns to User table for tracking correct and false answers --
+ALTER TABLE `User`
+ADD COLUMN `totalCorrectAnswers` INT DEFAULT 0,
+ADD COLUMN `totalFalseAnswers` INT DEFAULT 0;
 
+-- Create Leaderboard table --
+-- gameID is can be used to create different leaderboards for different games --
+CREATE TABLE `Leaderboard` (
+  `leaderboardId` INT NOT NULL AUTO_INCREMENT,
+  `userId` INT NOT NULL,
+  `score` INT NOT NULL,
+  `rankingDate` DATE NOT NULL,
+  `gameId` INT NOT NULL,
+  PRIMARY KEY (`leaderboardId`),
+  FOREIGN KEY (`userId`) REFERENCES `User` (`userId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
