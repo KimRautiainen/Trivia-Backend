@@ -4,6 +4,7 @@ const cors = require('cors');
 const userRoute = require('./routes/userRoute');
 const passport = require('./utils/passport');
 const authRoute = require('./routes/authRoute');
+const credientalsRoute = require('./routes/credientalsRoute');
 const session = require('express-session');
 const app = express();
 const port = 3000;
@@ -36,5 +37,7 @@ app.use(passport.initialize());
 app.use('/auth', authRoute);
 // Use the userRoute for handling user-related routes under the '/user' endpoint, and require authentication using the JWT strategy.
 app.use('/user', passport.authenticate('jwt', {session: false}), userRoute);
+// route for username/email avialiablity check
+app.use('/check', credientalsRoute);
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));

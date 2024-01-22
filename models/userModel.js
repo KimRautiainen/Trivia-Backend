@@ -23,6 +23,24 @@ const getUserById = async (id) => {
     throw new Error("sql query failed");
   }
 };
+const checkUsername = async (username) => {
+  try {
+    const sql = `SELECT * FROM User WHERE username = ?`;
+    const [rows] = await promisePool.query(sql, [username]);
+    return rows;} catch (e) {
+      console.error("error", e.message);
+      throw new Error("sql query failed");
+    }
+  };
+  const checkEmail = async (email) => {
+  try {
+    const sql = `SELECT * FROM User WHERE email = ?`;
+    const [rows] = await promisePool.query(sql, [email]);
+    return rows;} catch (e) {
+      console.error("error", e.message);
+      throw new Error("sql query failed");
+    }
+  };
 
 const insertUser = async (user) => {
   try {
@@ -233,4 +251,6 @@ module.exports = {
   getAchievementProgress,
   updateAchievementProgress,
   completeAchievement,
+  checkUsername,
+  checkEmail,
 };

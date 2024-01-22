@@ -130,6 +130,27 @@ const deleteUser = async (req, res) => {
 const checkToken = (req, res) => {
   res.json({ user: req.user });
 };
+const checkUsername = async (req, res) => {
+  try {
+    const username = req.body.username;
+    const result = await userModel.checkUsername(username);
+    res.status(200).json({ available: result.length === 0 });
+  } catch (error) {
+    console.error("error", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const checkEmail = async (req, res) => {
+  try {
+    const email = req.body.email;
+    const result = await userModel.checkEmail(email);
+    res.status(200).json({ available: result.length === 0 });
+  } catch (error) {
+    console.error("error", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 // User level controlling
 
@@ -259,5 +280,7 @@ const userController = {
   getUserAchievementProgress,
   updateUserAchievementProgress,
   completeUserAchievement,
+  checkUsername,
+  checkEmail,
 };
 module.exports = userController;
