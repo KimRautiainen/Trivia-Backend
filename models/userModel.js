@@ -236,6 +236,9 @@ const completeAchievement = async (userId, achievementId) => {
   return result;
 };
 
+
+
+
 module.exports = {
   getAllUsers,
   getUserById,
