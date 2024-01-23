@@ -59,5 +59,7 @@ router
   .route("/:userId")
   .get(authorizeUser, userController.getUser)
   .delete(authorizeUser, userController.deleteUser);
+// route to add correct / false answer to user
+router.put("/answers/:userId", authorizeUser, userController.putUserAnswer);  
 
 module.exports = router;
