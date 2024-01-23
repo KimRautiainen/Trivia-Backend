@@ -5,6 +5,7 @@ const userRoute = require('./routes/userRoute');
 const passport = require('./utils/passport');
 const authRoute = require('./routes/authRoute');
 const credientalsRoute = require('./routes/credientalsRoute');
+const leaderboardRoute = require('./routes/leaderboardRoute');
 const session = require('express-session');
 const app = express();
 const port = 3000;
@@ -39,5 +40,7 @@ app.use('/auth', authRoute);
 app.use('/user', passport.authenticate('jwt', {session: false}), userRoute);
 // route for username/email avialiablity check
 app.use('/check', credientalsRoute);
+// route for leaderboard
+app.use('/leaderboard', require('./routes/leaderboardRoute'));
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));

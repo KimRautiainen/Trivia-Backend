@@ -64,4 +64,44 @@ CREATE TABLE `AchievementProgress` (
   FOREIGN KEY (`achievementId`) REFERENCES `Achievement` (`achievementId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;    
 --------------------------------------------------------------
+-- Add columns to User table for tracking correct and false answers --
+ALTER TABLE `User`
+ADD COLUMN `totalCorrectAnswers` INT DEFAULT 0,
+ADD COLUMN `totalFalseAnswers` INT DEFAULT 0;
 
+-- Create Leaderboard table --
+-- gameID is can be used to create different leaderboards for different games --
+CREATE TABLE `Leaderboard` (
+  `leaderboardId` INT NOT NULL AUTO_INCREMENT,
+  `userId` INT NOT NULL,
+  `score` INT NOT NULL,
+  `rankingDate` DATE NOT NULL,
+  `gameId` INT NOT NULL,
+  PRIMARY KEY (`leaderboardId`),
+  FOREIGN KEY (`userId`) REFERENCES `User` (`userId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+/* 
+----- TEST DATA!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+-- Insert users into the User table
+INSERT INTO User (username, email, userAvatar, password) VALUES 
+('user1', 'user1@example.com', 'avatar1.png', 'hashedpassword1'),
+('user2', 'user2@example.com', 'avatar2.png', 'hashedpassword2'),
+('user3', 'user3@example.com', 'avatar3.png', 'hashedpassword3'),
+('user4', 'user4@example.com', 'avatar4.png', 'hashedpassword4'),
+('user5', 'user5@example.com', 'avatar5.png', 'hashedpassword5');
+
+-- Now insert data into the Leaderboard table
+INSERT INTO Leaderboard (userId, score, rankingDate, gameId) VALUES
+(5, 150, '2022-03-01', 1),
+(6, 125, '2022-03-01', 1),
+(7, 100, '2022-03-01', 1),
+(8, 75,  '2022-03-01', 1),
+(9, 50,  '2022-03-01', 1),
+(5, 200, '2022-03-08', 2),
+(6, 175, '2022-03-08', 2),
+(7, 150, '2022-03-08', 2),
+(8, 100, '2022-03-08', 2),
+(9, 80,  '2022-03-08', 2);
+
+*/
