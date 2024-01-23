@@ -280,6 +280,19 @@ const completeUserAchievement = async (req, res) => {
   }
 };
 
+// add correct / false answer to user
+const putUserAnswer = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const correct = req.body.correct;
+    const falseAnswers = req.body.falseAnswers;
+    const result = await userModel.putUserAnswer(userId, correct, falseAnswers);
+    res.status(200).json({ message: "Answer added" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 
 
 const userController = {
@@ -298,5 +311,6 @@ const userController = {
   completeUserAchievement,
   checkUsername,
   checkEmail,
+  putUserAnswer,
 };
 module.exports = userController;

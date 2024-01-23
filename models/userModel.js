@@ -236,7 +236,21 @@ const completeAchievement = async (userId, achievementId) => {
   return result;
 };
 
-
+// add correct and false answers to User
+const putUserAnswer = async (userId, correct, falseAnswer) => {
+  try {
+    const sql = `UPDATE User SET totalCorrectAnswers=totalCorrectAnswers+?, totalFalseAnswers=totalFalseAnswers+? where userId=?`;
+    const [rows] = await promisePool.query(sql, [
+      correct,
+      falseAnswer,
+      userId,
+    ]);
+    return rows;
+  } catch (e) {
+    console.error("error", e.message);
+    throw new Error("sql update user answers failed");
+  }
+};
 
 
 module.exports = {
@@ -257,4 +271,5 @@ module.exports = {
   completeAchievement,
   checkUsername,
   checkEmail,
+  putUserAnswer,
 };
