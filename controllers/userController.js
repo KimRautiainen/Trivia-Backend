@@ -2,6 +2,7 @@
 const e = require("express");
 const userModel = require("../models/userModel");
 const bcrypt = require("bcryptjs");
+const { validationResult } = require("express-validator");
 
 // Get all users
 const getUserList = async (req, res) => {
@@ -236,13 +237,17 @@ const postUserAchievements = async (req, res) => {
 
 // Get progress of a specific achievement
 const getUserAchievementProgress = async (req, res) => {
+  // Check for validation errors
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
-    const userId = req.params.userId; // Validate and sanitize this
-    const achievementId = req.params.achievementId; // Validate and sanitize this
-    const progress = await userModel.getAchievementProgress(
-      userId,
-      achievementId
-    );
+    // Assuming validation is successful, proceed with the original logic
+    const userId = req.params.userId;
+    const achievementId = req.params.achievementId;
+    const progress = await userModel.getAchievementProgress(userId, achievementId);
     res.json(progress);
   } catch (error) {
     res.status(500).json({ message: error.message });

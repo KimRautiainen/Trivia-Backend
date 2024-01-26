@@ -5,43 +5,54 @@ const userController = require("../controllers/userController");
 const multer = require("multer");
 const upload = multer({ dest: "uploads" });
 const authorizeUser = require("../middleware/authMiddleware");
+const { param } = require('express-validator');
 
-// Routes for achievement progress
+//-------- Routes for achievement progress --------//
 
+// Get user achievement progress
 router.get(
   "/:userId/achievements/:achievementId/progress",
-  authorizeUser,
+  [
+    param('userId').isInt().withMessage('User ID must be an integer'),
+    param('achievementId').isInt().withMessage('Achievement ID must be an integer'),
+    authorizeUser
+  ],
   userController.getUserAchievementProgress
 );
+// Update user achievement progress
 router.put(
   "/:userId/achievements/:achievementId/progress",
   authorizeUser,
   userController.updateUserAchievementProgress
 );
+// Complete user achievement
 router.post(
   "/:userId/achievements/:achievementId/complete",
   authorizeUser,
   userController.completeUserAchievement
 );
+//-------- Routes for Xp and level controlling --------//
 
-// user level and xp routes
-router.route("/:userId/levels").put(authorizeUser, userController.putUserXp); //  "/user/req.params.userId/levels"
+// Add xp to user
+router.route("/:userId/levels").put(authorizeUser, userController.putUserXp); 
 
-// User achievements routes
+//-------- Routes for user achievements --------//
+
 router
   .route("/:userId/userAchievements")
-  .get(authorizeUser, userController.getUserAchievements)
-  .post(authorizeUser, userController.postUserAchievements);
+  .get(authorizeUser, userController.getUserAchievements) // Get user achievements
+  .post(authorizeUser, userController.postUserAchievements); // Add user achievement
 
 
-// Achievement routes
+// Get all achievements
 router.route("/achievements").get(userController.getAllAchievements);
 
-// User routes
+//-------- Routes for user --------//
+
 router
   .route("/")
-  .get(userController.getUserList)
-  .post(upload.single("user"), userController.postUser);
+  .get(userController.getUserList) // Get all users
+  .post(upload.single("user"), userController.postUser); // Add user
 
 
 // Modify user
