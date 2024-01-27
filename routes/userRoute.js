@@ -5,7 +5,7 @@ const userController = require("../controllers/userController");
 const multer = require("multer");
 const upload = multer({ dest: "uploads" });
 const authorizeUser = require("../middleware/authMiddleware");
-const { param } = require('express-validator');
+const { param, body } = require('express-validator');
 
 //-------- Routes for achievement progress --------//
 
@@ -22,13 +22,22 @@ router.get(
 // Update user achievement progress
 router.put(
   "/:userId/achievements/:achievementId/progress",
-  authorizeUser,
+  [
+    param('userId').isInt().withMessage('User ID must be an integer'),
+    param('achievementId').isInt().withMessage('Achievement ID must be an integer'),
+    body('progress').isInt({min: 0}).withMessage('Progress must be an integer'),
+    authorizeUser
+  ],
   userController.updateUserAchievementProgress
 );
 // Complete user achievement
 router.post(
   "/:userId/achievements/:achievementId/complete",
-  authorizeUser,
+  [
+  param('userId').isInt().withMessage('User ID must be an integer'),
+  param('achievementId').isInt().withMessage('Achievement ID must be an integer'),  
+  authorizeUser
+  ],
   userController.completeUserAchievement
 );
 //-------- Routes for Xp and level controlling --------//

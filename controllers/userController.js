@@ -256,10 +256,15 @@ const getUserAchievementProgress = async (req, res) => {
 
 // Update progress of a specific achievement
 const updateUserAchievementProgress = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
-    const userId = req.params.userId; // Validate and sanitize this
-    const achievementId = req.params.achievementId; // Validate and sanitize this
-    const { progress } = req.body; // Validate and sanitize this
+    const userId = req.params.userId;
+    const achievementId = req.params.achievementId;
+    const { progress } = req.body;
     const result = await userModel.updateAchievementProgress(
       userId,
       achievementId,
@@ -273,9 +278,13 @@ const updateUserAchievementProgress = async (req, res) => {
 
 // Complete a specific achievement
 const completeUserAchievement = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   try {
-    const userId = req.params.userId; // Validate and sanitize this
-    const achievementId = req.params.achievementId; // Validate and sanitize this
+    const userId = req.params.userId; 
+    const achievementId = req.params.achievementId; 
     const result = await userModel.completeAchievement(userId, achievementId);
     res
       .status(200)
