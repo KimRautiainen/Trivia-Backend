@@ -198,7 +198,7 @@ const getAllAchievements = async (req, res) => {
   } catch (error) {
     res
       .status(500)
-      .json({ location: "UserController", message: error.message });
+      .json({ message: error.message });
   }
 };
 
@@ -220,6 +220,10 @@ const getUserAchievements = async (req, res) => {
 
 // Add achievement to user
 const postUserAchievements = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   const achievementId = req.body.achievementId;
   const userId = req.params.userId;
   // Basic validation
