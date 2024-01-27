@@ -173,6 +173,10 @@ const getUserLevel = async (req, res) => {};
 const putUserLevel = async (req, res) => {};
 // Add xp to user
 const putUserXp = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   try {
     const result = await userModel.addUserXp(req.params.userId, req.body.xp);
     console.log("userId from req.params: ", req.params.userId);

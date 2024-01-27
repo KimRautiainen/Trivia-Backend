@@ -7,14 +7,18 @@ const upload = multer({ dest: "uploads" });
 const authorizeUser = require("../middleware/authMiddleware");
 const { param, body } = require('express-validator');
 
+// validation for user id and achievement id
+const validatedUserId = param('userId').isInt().withMessage('User ID must be an integer');
+const validatedAchievementId = param('achievementId').isInt().withMessage('Achievement ID must be an integer');
+
 //-------- Routes for achievement progress --------//
 
 // Get user achievement progress
 router.get(
   "/:userId/achievements/:achievementId/progress",
   [
-    param('userId').isInt().withMessage('User ID must be an integer'),
-    param('achievementId').isInt().withMessage('Achievement ID must be an integer'),
+    validatedUserId,
+    validatedAchievementId,
     authorizeUser
   ],
   userController.getUserAchievementProgress
@@ -23,8 +27,8 @@ router.get(
 router.put(
   "/:userId/achievements/:achievementId/progress",
   [
-    param('userId').isInt().withMessage('User ID must be an integer'),
-    param('achievementId').isInt().withMessage('Achievement ID must be an integer'),
+    validatedUserId,
+    validatedAchievementId,
     body('progress').isInt({min: 0}).withMessage('Progress must be an integer'),
     authorizeUser
   ],
@@ -34,8 +38,8 @@ router.put(
 router.post(
   "/:userId/achievements/:achievementId/complete",
   [
-  param('userId').isInt().withMessage('User ID must be an integer'),
-  param('achievementId').isInt().withMessage('Achievement ID must be an integer'),  
+    validatedUserId,
+    validatedAchievementId,
   authorizeUser
   ],
   userController.completeUserAchievement
@@ -43,7 +47,12 @@ router.post(
 //-------- Routes for Xp and level controlling --------//
 
 // Add xp to user
-router.route("/:userId/levels").put(authorizeUser, userController.putUserXp); 
+router.route("/:userId/levels").put([
+  validatedUserId,
+  body('xp').isInt({min: 0}).withMessage('XP must be an integer'),
+  authorizeUser
+  ], userController.putUserXp);
+  
 
 //-------- Routes for user achievements --------//
 
