@@ -3,6 +3,20 @@ const e = require("express");
 const userModel = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const { validationResult } = require("express-validator");
+const multer = require("multer");
+const fs = require('fs');
+const path = require('path');
+
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ['image/png', 'image/jpeg']
+  if (allowedTypes.includes(file.mimetype)) {
+      // accept file
+      cb(null, true);
+  }else {
+      // reject file
+      cb(null, false);
+  }
+};
 
 // Get all users
 const getUserList = async (req, res) => {
@@ -37,18 +51,35 @@ const getUser = async (req, res) => {
 };
 
 // Create new user
+
 const postUser = async (req, res) => {
   console.log("posting user", req.body, req.file);
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
 
   // Check if username is already taken
   const usernameExists = await userModel.checkUsername(req.body.username);
   if (usernameExists.length > 0) {
+    if (req.file) {
+      const filePath = path.join(__dirname, '../uploads/', req.file.filename);
+      fs.unlink(filePath, (err) => {
+          if (err) console.error("Error deleting file:", err);
+      });
+  }
     return res.status(409).json({ message: "Username already taken" });
   }
 
   // Check if email is already in use
   const emailExists = await userModel.checkEmail(req.body.email);
   if (emailExists.length > 0) {
+    if (req.file) {
+      const filePath = path.join(__dirname, '../uploads/', req.file.filename);
+      fs.unlink(filePath, (err) => {
+          if (err) console.error("Error deleting file:", err);
+      });
+  }
     return res.status(409).json({ message: "Email already in use" });
   }
 

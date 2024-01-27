@@ -83,7 +83,7 @@ router.route("/achievements").get(userController.getAllAchievements);
 router
   .route("/")
   .get(userController.getUserList) // Get all users
-  .post(upload.single("user"), userController.postUser); // Add user
+  //.post(upload.single("user"), userController.postUser); // Add user
 
 // Modify user
 router.put(

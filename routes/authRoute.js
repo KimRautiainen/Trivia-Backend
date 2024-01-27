@@ -2,39 +2,16 @@
 const express = require("express");
 const router = express.Router();
 const {body} = require('express-validator');
-const multer = require('multer');
 const { login, logout } = require("../controllers/authController");
 const {postUser} = require('../controllers/userController');
+const handleUserUpload = require('../middleware/uploadMiddleware');
 
 
 
-const fileFilter = (req, file, cb) => {
-    const allowedTypes = ['image/png', 'image/jpeg']
-    if (allowedTypes.includes(file.mimetype)) {
-        // accept file
-        cb(null, true);
-    }else {
-        // reject file
-        cb(null, false);
-    }
-};
+router.post("/login", login);
 
-const upload = multer({dest: 'uploads', fileFilter});
+router.get('/logout', logout);
 
-router
-    .post("/login", login)
-    .get('/logout', logout)
-    //.post('/register',upload.single('user'), postUser)
-    .post('/register', upload.single('user'), (req, res) => {
-        if (req.file) {
-            // register as user
-            postUser(req, res);
-        } else {
-            // TODO some error halndling
-            res.status(400).json({error: 400, message: 'no file in request'});
-            
-        }
-    });
-
+router.post('/register', handleUserUpload, postUser);
 
 module.exports = router;
