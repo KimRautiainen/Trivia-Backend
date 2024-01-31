@@ -27,7 +27,18 @@ const getAllUsers = async () => {
 
 const getUserById = async (id) => {
   try {
-    const sql = ` SELECT User. * from User where userId=?`;
+    const sql = `
+    SELECT 
+      userId, 
+      username, 
+      userAvatar, 
+      experiencePoints, 
+      level, 
+      maxXp, 
+      totalCorrectAnswers, 
+      totalFalseAnswers 
+    FROM User where userId=?
+  `;
     const [rows] = await promisePool.query(sql, [id]);
     return rows;
   } catch (e) {
