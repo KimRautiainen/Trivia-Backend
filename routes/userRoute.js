@@ -6,6 +6,7 @@ const multer = require("multer");
 const upload = multer({ dest: "uploads" });
 const authorizeUser = require("../middleware/authMiddleware");
 const { param, body } = require("express-validator");
+const handleUserUpdate = require("../middleware/handleUserUpdate");
 
 // validation for user id and achievement id
 const validatedUserId = param("userId")
@@ -89,7 +90,7 @@ router
 router.put(
   "/:userId",
   authorizeUser,
-  upload.single("user"),
+  handleUserUpdate,
   userController.putUser
 );
 // Check token

@@ -115,49 +115,72 @@ const postUser = async (req, res) => {
 // Modify user
 const putUser = async (req, res) => {
   try {
-    const userId = req.params.userId;
-    if (!userId) {
-      return res.status(400).json({ message: "User ID is required" });
-    }
-
-    const userUpdates = {};
-
-    if (req.body.password) {
-      const salt = await bcrypt.genSalt(10);
-      userUpdates.password = await bcrypt.hash(req.body.password, salt);
-    }
-
-    const updatableFields = [
-      "username",
-      "email",
-    ];
-    updatableFields.forEach((field) => {
-      if (req.body[field]) {
-        userUpdates[field] = req.body[field];
+      const userId = req.params.userId;
+      if (!userId) {
+          deleteUploadedFile(req);
+          return res.status(400).json({ message: "User ID is required" });
       }
-    });
 
-    if (req.file) {
-      userUpdates.userAvatar = req.file.filename;
-    } else if (req.body.sessionuser) {
-      userUpdates.userAvatar = req.body.sessionuser;
-    }
+      const userUpdates = {};
 
-    console.log(
-      "Updating user ID " + userId + " with: " + JSON.stringify(userUpdates)
-    );
+      if (req.body.password) {
+          const salt = await bcrypt.genSalt(10);
+          userUpdates.password = await bcrypt.hash(req.body.password, salt);
+      }
 
-    if (Object.keys(userUpdates).length === 0) {
-      return res.status(400).json({ message: "No updates provided" });
-    }
+      const updatableFields = ["username", "email"];
+      updatableFields.forEach((field) => {
+          if (req.body[field]) {
+              userUpdates[field] = req.body[field];
+          }
+      });
 
-    const result = await userModel.modifyUser(userId, userUpdates);
-    res.status(200).json({ message: "User modified" });
+      if (req.file) {
+          // Move file from temp to permanent directory
+          const tempPath = req.file.path;
+          const targetPath = path.join(__dirname, '../uploads/', req.file.filename);
+          
+          await moveFile(tempPath, targetPath);
+          userUpdates.userAvatar = req.file.filename;
+      } else if (req.body.sessionuser) {
+          userUpdates.userAvatar = req.body.sessionuser;
+      }
+
+      if (Object.keys(userUpdates).length === 0) {
+          deleteUploadedFile(req);
+          return res.status(400).json({ message: "No updates provided" });
+      }
+
+      const result = await userModel.modifyUser(userId, userUpdates);
+      res.status(200).json({ message: "User modified" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Internal server error" });
+      console.error(error);
+      deleteUploadedFile(req);
+      res.status(500).json({ message: "Internal server error" });
   }
 };
+
+function deleteUploadedFile(req) {
+  if (req.file) {
+      const filePath = path.join(__dirname, '../uploads/temp/', req.file.filename);
+      fs.unlink(filePath, (err) => {
+          if (err) console.error("Error deleting file:", err);
+      });
+  }
+}
+
+async function moveFile(source, destination) {
+  return new Promise((resolve, reject) => {
+      fs.rename(source, destination, (err) => {
+          if (err) {
+              console.error("Error moving file:", err);
+              reject(err);
+          } else {
+              resolve();
+          }
+      });
+  });
+}
 
 // Delete user
 const deleteUser = async (req, res) => {
