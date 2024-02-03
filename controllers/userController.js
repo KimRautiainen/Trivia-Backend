@@ -2,6 +2,21 @@
 const e = require("express");
 const userModel = require("../models/userModel");
 const bcrypt = require("bcryptjs");
+const { validationResult } = require("express-validator");
+const multer = require("multer");
+const fs = require('fs');
+const path = require('path');
+
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ['image/png', 'image/jpeg']
+  if (allowedTypes.includes(file.mimetype)) {
+      // accept file
+      cb(null, true);
+  }else {
+      // reject file
+      cb(null, false);
+  }
+};
 
 // Get all users
 const getUserList = async (req, res) => {
@@ -15,6 +30,10 @@ const getUserList = async (req, res) => {
 
 // Get user by id
 const getUser = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   const userId = Number(req.params.userId);
   if (!Number.isInteger(userId)) {
     res.status(400).json({
@@ -36,18 +55,35 @@ const getUser = async (req, res) => {
 };
 
 // Create new user
+
 const postUser = async (req, res) => {
   console.log("posting user", req.body, req.file);
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
 
   // Check if username is already taken
   const usernameExists = await userModel.checkUsername(req.body.username);
   if (usernameExists.length > 0) {
+    if (req.file) {
+      const filePath = path.join(__dirname, '../uploads/', req.file.filename);
+      fs.unlink(filePath, (err) => {
+          if (err) console.error("Error deleting file:", err);
+      });
+  }
     return res.status(409).json({ message: "Username already taken" });
   }
 
   // Check if email is already in use
   const emailExists = await userModel.checkEmail(req.body.email);
   if (emailExists.length > 0) {
+    if (req.file) {
+      const filePath = path.join(__dirname, '../uploads/', req.file.filename);
+      fs.unlink(filePath, (err) => {
+          if (err) console.error("Error deleting file:", err);
+      });
+  }
     return res.status(409).json({ message: "Email already in use" });
   }
 
@@ -82,53 +118,89 @@ const postUser = async (req, res) => {
 
 // Modify user
 const putUser = async (req, res) => {
+  console.log("Request Body:", req.body); // Log the request body
+
+  const errors = validationResult(req);
+  console.log("Validation Errors:", errors.array()); // Log validation errors
+
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
-    const userId = req.params.userId;
-    if (!userId) {
-      return res.status(400).json({ message: "User ID is required" });
-    }
-
-    const userUpdates = {};
-
-    if (req.body.password) {
-      const salt = await bcrypt.genSalt(10);
-      userUpdates.password = await bcrypt.hash(req.body.password, salt);
-    }
-
-    const updatableFields = [
-      "username",
-      "email",
-    ];
-    updatableFields.forEach((field) => {
-      if (req.body[field]) {
-        userUpdates[field] = req.body[field];
+      const userId = req.params.userId;
+      if (!userId) {
+          deleteUploadedFile(req);
+          return res.status(400).json({ message: "User ID is required" });
       }
-    });
 
-    if (req.file) {
-      userUpdates.userAvatar = req.file.filename;
-    } else if (req.body.sessionuser) {
-      userUpdates.userAvatar = req.body.sessionuser;
-    }
+      const userUpdates = {};
 
-    console.log(
-      "Updating user ID " + userId + " with: " + JSON.stringify(userUpdates)
-    );
+      if (req.body.password) {
+          const salt = await bcrypt.genSalt(10);
+          userUpdates.password = await bcrypt.hash(req.body.password, salt);
+      }
 
-    if (Object.keys(userUpdates).length === 0) {
-      return res.status(400).json({ message: "No updates provided" });
-    }
+      const updatableFields = ["username", "email"];
+      updatableFields.forEach((field) => {
+          if (req.body[field]) {
+              userUpdates[field] = req.body[field];
+          }
+      });
 
-    const result = await userModel.modifyUser(userId, userUpdates);
-    res.status(200).json({ message: "User modified" });
+      if (req.file) {
+          // Move file from temp to permanent directory
+          const tempPath = req.file.path;
+          const targetPath = path.join(__dirname, '../uploads/', req.file.filename);
+          
+          await moveFile(tempPath, targetPath);
+          userUpdates.userAvatar = req.file.filename;
+      } else if (req.body.sessionuser) {
+          userUpdates.userAvatar = req.body.sessionuser;
+      }
+
+      if (Object.keys(userUpdates).length === 0) {
+          deleteUploadedFile(req);
+          return res.status(400).json({ message: "No updates provided" });
+      }
+
+      const result = await userModel.modifyUser(userId, userUpdates);
+      res.status(200).json({ message: "User modified" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Internal server error" });
+      console.error(error);
+      deleteUploadedFile(req);
+      res.status(500).json({ message: "Internal server error" });
   }
 };
 
+function deleteUploadedFile(req) {
+  if (req.file) {
+      const filePath = path.join(__dirname, '../uploads/temp/', req.file.filename);
+      fs.unlink(filePath, (err) => {
+          if (err) console.error("Error deleting file:", err);
+      });
+  }
+}
+
+async function moveFile(source, destination) {
+  return new Promise((resolve, reject) => {
+      fs.rename(source, destination, (err) => {
+          if (err) {
+              console.error("Error moving file:", err);
+              reject(err);
+          } else {
+              resolve();
+          }
+      });
+  });
+}
+
 // Delete user
 const deleteUser = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   try {
     const result = await userModel.deleteUser(req.params.userId);
     console.log(req.params);
@@ -145,8 +217,13 @@ const checkToken = (req, res) => {
   res.json({ user: req.user });
 };
 const checkUsername = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
-    const username = req.body.username;
+    const username = req.query.username;
     const result = await userModel.checkUsername(username);
     res.status(200).json({ available: result.length === 0 });
   } catch (error) {
@@ -156,8 +233,13 @@ const checkUsername = async (req, res) => {
 };
 
 const checkEmail = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
-    const email = req.body.email;
+    const email = req.query.email;
     const result = await userModel.checkEmail(email);
     res.status(200).json({ available: result.length === 0 });
   } catch (error) {
@@ -172,6 +254,10 @@ const getUserLevel = async (req, res) => {};
 const putUserLevel = async (req, res) => {};
 // Add xp to user
 const putUserXp = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   try {
     const result = await userModel.addUserXp(req.params.userId, req.body.xp);
     console.log("userId from req.params: ", req.params.userId);
@@ -193,7 +279,7 @@ const getAllAchievements = async (req, res) => {
   } catch (error) {
     res
       .status(500)
-      .json({ location: "UserController", message: error.message });
+      .json({ message: error.message });
   }
 };
 
@@ -215,6 +301,10 @@ const getUserAchievements = async (req, res) => {
 
 // Add achievement to user
 const postUserAchievements = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   const achievementId = req.body.achievementId;
   const userId = req.params.userId;
   // Basic validation
@@ -236,13 +326,17 @@ const postUserAchievements = async (req, res) => {
 
 // Get progress of a specific achievement
 const getUserAchievementProgress = async (req, res) => {
+  // Check for validation errors
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
-    const userId = req.params.userId; // Validate and sanitize this
-    const achievementId = req.params.achievementId; // Validate and sanitize this
-    const progress = await userModel.getAchievementProgress(
-      userId,
-      achievementId
-    );
+    // Assuming validation is successful, proceed with the original logic
+    const userId = req.params.userId;
+    const achievementId = req.params.achievementId;
+    const progress = await userModel.getAchievementProgress(userId, achievementId);
     res.json(progress);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -251,10 +345,15 @@ const getUserAchievementProgress = async (req, res) => {
 
 // Update progress of a specific achievement
 const updateUserAchievementProgress = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
-    const userId = req.params.userId; // Validate and sanitize this
-    const achievementId = req.params.achievementId; // Validate and sanitize this
-    const { progress } = req.body; // Validate and sanitize this
+    const userId = req.params.userId;
+    const achievementId = req.params.achievementId;
+    const { progress } = req.body;
     const result = await userModel.updateAchievementProgress(
       userId,
       achievementId,
@@ -268,9 +367,13 @@ const updateUserAchievementProgress = async (req, res) => {
 
 // Complete a specific achievement
 const completeUserAchievement = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   try {
-    const userId = req.params.userId; // Validate and sanitize this
-    const achievementId = req.params.achievementId; // Validate and sanitize this
+    const userId = req.params.userId; 
+    const achievementId = req.params.achievementId; 
     const result = await userModel.completeAchievement(userId, achievementId);
     res
       .status(200)
@@ -282,6 +385,10 @@ const completeUserAchievement = async (req, res) => {
 
 // add correct / false answer to user
 const putUserAnswer = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   try {
     const userId = req.params.userId;
     const correct = req.body.correct;

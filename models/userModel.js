@@ -4,18 +4,41 @@ const promisePool = pool.promise();
 
 const getAllUsers = async () => {
   try {
-    const sql = `SELECT * FROM User `;
+    
+    const sql = `
+      SELECT 
+        userId, 
+        username, 
+        userAvatar, 
+        experiencePoints, 
+        level, 
+        maxXp, 
+        totalCorrectAnswers, 
+        totalFalseAnswers 
+      FROM User
+    `;
     const [rows] = await promisePool.query(sql);
     return rows;
   } catch (e) {
     console.error("error", e.message);
-    throw new Error("sql query failed");
+    throw new Error("SQL query failed");
   }
 };
 
 const getUserById = async (id) => {
   try {
-    const sql = ` SELECT User. * from User where userId=?`;
+    const sql = `
+    SELECT 
+      userId, 
+      username, 
+      userAvatar, 
+      experiencePoints, 
+      level, 
+      maxXp, 
+      totalCorrectAnswers, 
+      totalFalseAnswers 
+    FROM User where userId=?
+  `;
     const [rows] = await promisePool.query(sql, [id]);
     return rows;
   } catch (e) {
