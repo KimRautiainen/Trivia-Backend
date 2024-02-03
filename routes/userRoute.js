@@ -98,7 +98,7 @@ router.put(
       .optional()
       .trim()
       .escape()
-      .isLength({ min: 3 })
+      .isLength({ min: 3, max: 20})
       .withMessage("Username must be at least 3 characters long"),
     body("email")
       .optional()
@@ -107,7 +107,7 @@ router.put(
       .normalizeEmail(),
     body("password")
       .optional()
-      .isLength({ min: 5 })
+      .isLength({ min: 5, max: 30})
       .withMessage("Password must be at least 5 characters long"),
     // Finally, run the controller function
   ],

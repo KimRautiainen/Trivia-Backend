@@ -4,28 +4,28 @@ const router = express.Router();
 const authorizeUser = require("../middleware/authMiddleware");
 const leaderboardController = require("../controllers/leaderboardController");
 const passport = require("passport");
+const { param, body } = require("express-validator");
+// Validate userId as an integer
+const validateUserId = param('userId', 'Invalid user ID').isInt().toInt();
 
-// Leaderboard routes
-router.route("/getLeaderboard").get(leaderboardController.getLeaderboard);
+// Validate gameId and score for updating highscores
+const validateGameId = body('gameId', 'Invalid game ID').isInt();
+const validateScore = body('score', 'Invalid score').isInt();
 
-// Get leaderboard by id
-router.get(
-  "/getLeaderboardById/:userId",
-  leaderboardController.getLeaderboardById
-);
+// Leaderboard routes with validation
+router.get("/getLeaderboard", leaderboardController.getLeaderboard);
 
-// get current highscore of user
-router.get(
-  "/getHighscore/:userId",
-  leaderboardController.getHighscore
-);
+// Get leaderboard by id with userId validation
+router.get("/getLeaderboardById/:userId", validateUserId, leaderboardController.getLeaderboardById);
 
-// update highscore
+// get current highscore of user with userId validation
+router.get("/getHighscore/:userId", validateUserId, leaderboardController.getHighscore);
+
+// update highscore with userId validation and additional body validations
 router.put(
-    "/updateHighscore/:userId",
-    passport.authenticate('jwt', { session: false }),
-    authorizeUser,
-    leaderboardController.updateHighscore
-  );
+  "/updateHighscore/:userId",
+  [passport.authenticate('jwt', { session: false }), authorizeUser, validateUserId, validateGameId, validateScore],
+  leaderboardController.updateHighscore
+);
 
 module.exports = router;

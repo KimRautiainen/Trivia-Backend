@@ -1,8 +1,13 @@
 "use strict";
 const e = require("express");
 const leaderboardModel = require("../models/leaderboardModel");
+const { validationResult } = require("express-validator");
 // Leaderboard controlling
 const getLeaderboard = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ message: errors.array() });
+  }
   try {
     const leaderboard = await leaderboardModel.getLeaderboard();
     res.json(leaderboard);
@@ -11,6 +16,10 @@ const getLeaderboard = async (req, res) => {
   }
 };
 const getLeaderboardById = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ message: errors.array() });
+  }
   try {
     const userId = req.params.userId;
     const leaderboard = await leaderboardModel.getLeaderboardById(userId);
@@ -20,6 +29,10 @@ const getLeaderboardById = async (req, res) => {
   }
 };
 const getHighscore = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ message: errors.array() });
+  }
     try {
         const userId = req.params.userId;
         const highscore = await leaderboardModel.getHighscore(userId);
@@ -29,6 +42,10 @@ const getHighscore = async (req, res) => {
     }
 };
 const updateHighscore = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ message: errors.array() });
+  }
     try {
         const userId = req.params.userId;
         const gameId = req.body.gameId;
