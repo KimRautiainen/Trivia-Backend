@@ -2,12 +2,18 @@
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
 require("dotenv").config();
+const { validationResult } = require('express-validator');
 
 const login = (req, res) => {
-    console.log("login req.body", req.body)
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
+    console.log("login req.body", req.body);
     passport.authenticate('local', {session: false}, (err, user, info) => {
         if (err || !user) {
-           console.log("info: ", info);
+            console.log("info: ", info);
             console.log("user: ", user);
             return res.status(400).json({
                 message: 'Username / password wrong',
@@ -15,11 +21,10 @@ const login = (req, res) => {
         }
         req.login(user, {session: false}, (err) => {
             if (err) {
-                res.json({message: err, errorloaction: "login"});
+                res.json({message: err, errorlocation: "login"});
             }
             // generate a signed json web token with the contents of user object and return it in the response
-            const token = jwt.sign(user, process.env.JWT_SECRET);
-            // Add a redirect method to the response
+            const token = jwt.sign(user.toJSON(), process.env.JWT_SECRET);
             return res.json({user, token});
         });
     })(req, res);
