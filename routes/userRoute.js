@@ -5,7 +5,7 @@ const userController = require("../controllers/userController");
 const multer = require("multer");
 const upload = multer({ dest: "uploads" });
 const authorizeUser = require("../middleware/authMiddleware");
-const { param, body,validationResult } = require("express-validator");
+const { param, body, validationResult } = require("express-validator");
 const handleUserUpdate = require("../middleware/handleUserUpdate");
 
 // validation for user id and achievement id
@@ -62,7 +62,7 @@ router
 router
   .route("/:userId/userAchievements")
   // Get users earned achievements
-  .get([validatedUserId, authorizeUser], userController.getUserAchievements) 
+  .get([validatedUserId, authorizeUser], userController.getUserAchievements)
 
   // Add achievement to user
   .post(
@@ -74,17 +74,15 @@ router
       authorizeUser,
     ],
     userController.postUserAchievements
-  ); 
+  );
 
 // Get all achievements
 router.route("/achievements").get(userController.getAllAchievements);
 
 //-------- Routes for user --------//
 
-router
-  .route("/")
-  .get(userController.getUserList) // Get all users
-  //.post(upload.single("user"), userController.postUser); // Add user
+router.route("/").get(userController.getUserList); // Get all users
+//.post(upload.single("user"), userController.postUser); // Add user
 
 // Modify user
 router.put(
@@ -96,9 +94,21 @@ router.put(
     // Then, handle the file upload
     handleUserUpdate,
     // After Multer processes the file, validate the rest of the fields
-    body('username').optional().trim().escape().isLength({ min: 3 }).withMessage('Username must be at least 3 characters long'),
-    body('email').optional().isEmail().withMessage('Invalid email').normalizeEmail(),
-    body('password').optional().isLength({ min: 5 }).withMessage('Password must be at least 5 characters long'),
+    body("username")
+      .optional()
+      .trim()
+      .escape()
+      .isLength({ min: 3 })
+      .withMessage("Username must be at least 3 characters long"),
+    body("email")
+      .optional()
+      .isEmail()
+      .withMessage("Invalid email")
+      .normalizeEmail(),
+    body("password")
+      .optional()
+      .isLength({ min: 5 })
+      .withMessage("Password must be at least 5 characters long"),
     // Finally, run the controller function
   ],
   userController.putUser
@@ -110,8 +120,8 @@ router.get("/token", userController.checkToken);
 // Get user by id and delete user
 router
   .route("/:userId")
-  .get(authorizeUser, userController.getUser)
-  .delete(authorizeUser, userController.deleteUser);
+  .get([validatedUserId, authorizeUser], userController.getUser)
+  .delete([validatedUserId, authorizeUser], userController.deleteUser);
 // route to add correct / false answer to user
 router.put("/answers/:userId", authorizeUser, userController.putUserAnswer);
 

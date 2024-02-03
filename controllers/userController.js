@@ -30,6 +30,10 @@ const getUserList = async (req, res) => {
 
 // Get user by id
 const getUser = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   const userId = Number(req.params.userId);
   if (!Number.isInteger(userId)) {
     res.status(400).json({
@@ -193,6 +197,10 @@ async function moveFile(source, destination) {
 
 // Delete user
 const deleteUser = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   try {
     const result = await userModel.deleteUser(req.params.userId);
     console.log(req.params);
