@@ -217,8 +217,13 @@ const checkToken = (req, res) => {
   res.json({ user: req.user });
 };
 const checkUsername = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
-    const username = req.body.username;
+    const username = req.query.username;
     const result = await userModel.checkUsername(username);
     res.status(200).json({ available: result.length === 0 });
   } catch (error) {
@@ -228,8 +233,13 @@ const checkUsername = async (req, res) => {
 };
 
 const checkEmail = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
-    const email = req.body.email;
+    const email = req.query.email;
     const result = await userModel.checkEmail(email);
     res.status(200).json({ available: result.length === 0 });
   } catch (error) {
@@ -375,6 +385,10 @@ const completeUserAchievement = async (req, res) => {
 
 // add correct / false answer to user
 const putUserAnswer = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   try {
     const userId = req.params.userId;
     const correct = req.body.correct;

@@ -123,6 +123,14 @@ router
   .get([validatedUserId, authorizeUser], userController.getUser)
   .delete([validatedUserId, authorizeUser], userController.deleteUser);
 // route to add correct / false answer to user
-router.put("/answers/:userId", authorizeUser, userController.putUserAnswer);
-
+router.put(
+  "/answers/:userId", 
+  [
+    validatedUserId,
+    authorizeUser,
+    body('correct').optional().isInt({ min: 0 }).withMessage('Correct must be a non-negative integer'),
+    body('falseAnswers').optional().isInt({ min: 0 }).withMessage('False Answers must be a non-negative integer')
+  ], 
+  userController.putUserAnswer
+);
 module.exports = router;
