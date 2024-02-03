@@ -5,7 +5,7 @@ const userController = require("../controllers/userController");
 const multer = require("multer");
 const upload = multer({ dest: "uploads" });
 const authorizeUser = require("../middleware/authMiddleware");
-const { param, body } = require("express-validator");
+const { param, body,validationResult } = require("express-validator");
 const handleUserUpdate = require("../middleware/handleUserUpdate");
 
 // validation for user id and achievement id
@@ -89,10 +89,21 @@ router
 // Modify user
 router.put(
   "/:userId",
-  authorizeUser,
-  handleUserUpdate,
+  [
+    // First, validate the user ID
+    validatedUserId,
+    authorizeUser,
+    // Then, handle the file upload
+    handleUserUpdate,
+    // After Multer processes the file, validate the rest of the fields
+    body('username').optional().trim().escape().isLength({ min: 3 }).withMessage('Username must be at least 3 characters long'),
+    body('email').optional().isEmail().withMessage('Invalid email').normalizeEmail(),
+    body('password').optional().isLength({ min: 5 }).withMessage('Password must be at least 5 characters long'),
+    // Finally, run the controller function
+  ],
   userController.putUser
 );
+
 // Check token
 router.get("/token", userController.checkToken);
 

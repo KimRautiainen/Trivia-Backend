@@ -114,6 +114,15 @@ const postUser = async (req, res) => {
 
 // Modify user
 const putUser = async (req, res) => {
+  console.log("Request Body:", req.body); // Log the request body
+
+  const errors = validationResult(req);
+  console.log("Validation Errors:", errors.array()); // Log validation errors
+
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
       const userId = req.params.userId;
       if (!userId) {
