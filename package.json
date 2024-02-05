@@ -20,9 +20,12 @@
     "session": "^0.1.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.22"
+    "jest": "^29.7.0",
+    "nodemon": "^2.0.22",
+    "supertest": "^6.3.4"
   },
   "scripts": {
-    "start": "nodemon app.js"
+    "start": "nodemon app.js",
+    "test": "jest --verbose"
   }
 }
