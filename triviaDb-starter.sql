@@ -1,6 +1,7 @@
 CREATE DATABASE triviaDb;
 USE triviaDb;
 -- Create the User table with additional columns for experience points and level --
+
 CREATE TABLE `User`
 (
   `userId` INT NOT NULL AUTO_INCREMENT,
@@ -81,7 +82,7 @@ CREATE TABLE `Leaderboard` (
   FOREIGN KEY (`userId`) REFERENCES `User` (`userId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-/* 
+ 
 ----- TEST DATA!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 -- Insert users into the User table
 INSERT INTO User (username, email, userAvatar, password) VALUES 
@@ -104,4 +105,3 @@ INSERT INTO Leaderboard (userId, score, rankingDate, gameId) VALUES
 (8, 100, '2022-03-08', 2),
 (9, 80,  '2022-03-08', 2);
 
-*/

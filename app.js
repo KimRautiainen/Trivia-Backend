@@ -8,7 +8,7 @@ const credientalsRoute = require('./routes/credientalsRoute');
 const leaderboardRoute = require('./routes/leaderboardRoute');
 const session = require('express-session');
 const app = express();
-const port = 3000;
+
 
 
 
@@ -43,4 +43,4 @@ app.use('/check', credientalsRoute);
 // route for leaderboard
 app.use('/leaderboard', require('./routes/leaderboardRoute'));
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+module.exports = app;

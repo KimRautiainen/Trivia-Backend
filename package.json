@@ -25,7 +25,8 @@
     "supertest": "^6.3.4"
   },
   "scripts": {
-    "start": "nodemon app.js",
+    "start": "node server.js",
     "test": "jest --verbose"
   }
+  
 }
