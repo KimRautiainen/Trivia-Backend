@@ -24,7 +24,7 @@ const login = (req, res) => {
                 res.json({message: err, errorlocation: "login"});
             }
             // generate a signed json web token with the contents of user object and return it in the response
-            const token = jwt.sign(user.toJSON(), process.env.JWT_SECRET);
+            const token = jwt.sign(user, process.env.JWT_SECRET);
             return res.json({user, token});
         });
     })(req, res);

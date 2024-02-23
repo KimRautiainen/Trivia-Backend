@@ -10,7 +10,7 @@ const handleUserUpload = require("../middleware/uploadMiddleware");
 router.post(
   "/login",
   [
-    body("username", "Username is required").not().isEmpty(),
+    body("email", "email is required").not().isEmpty(),
     body("password", "Password must be at least 5 characters long").isLength({
       min: 5,
       max: 30,
