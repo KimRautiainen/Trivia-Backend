@@ -1,3 +1,4 @@
+DROP DATABASE IF EXISTS triviaDb;
 CREATE DATABASE triviaDb;
 USE triviaDb;
 
@@ -26,8 +27,7 @@ CREATE TABLE `Level` (
   PRIMARY KEY (`levelId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
--------------------------------------------------------------
---Achievements--
+-- Achievements --
 
 -- Create the Achievements table --
 CREATE TABLE `Achievement` (
@@ -49,13 +49,13 @@ CREATE TABLE `UserAchievement` (
   FOREIGN KEY (`achievementId`) REFERENCES `Achievement` (`achievementId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
--- insert some achievements to database --
-INSERT INTO Achievement (name, description, icon, requirement) VALUES
-    ('Trivia Novice', 'Awarded for completing 10 trivia games.', 'icon_url_novice', 10),
-    ('Trivia Expert', 'Awarded for scoring over 80% in a trivia game.', 'icon_url_expert', 80),
-    ('Quiz Master', 'Awarded for winning 5 trivia games in a row.', 'icon_url_master', 5),
-    ('Participation Star', 'Awarded for participating in a trivia game every day for a week.', 'icon_url_star', 7),
-    ('Eagle Eye', 'Awarded for achieving a perfect score in a trivia game.', 'icon_url_eagle', 10);
+-- Insert some achievements into the database --
+INSERT INTO `Achievement` (name, description, icon, requirement) VALUES
+  ('Trivia Novice', 'Awarded for completing 10 trivia games.', 'icon_url_novice', 10),
+  ('Trivia Expert', 'Awarded for scoring over 80% in a trivia game.', 'icon_url_expert', 80),
+  ('Quiz Master', 'Awarded for winning 5 trivia games in a row.', 'icon_url_master', 5),
+  ('Participation Star', 'Awarded for participating in a trivia game every day for a week.', 'icon_url_star', 7),
+  ('Eagle Eye', 'Awarded for achieving a perfect score in a trivia game.', 'icon_url_eagle', 10);
 
 -- Table for tracking progress towards achievements --
 CREATE TABLE `AchievementProgress` (
@@ -80,11 +80,9 @@ CREATE TABLE `Rank` (
 INSERT INTO `Rank` (rankLevel, minPoints, maxPoints) VALUES
 (1, 0, 999),
 (2, 1000, 1999),
-(3, 2000, 2999),
--- Add more ranks as needed
-;
+(3, 2000, 2999);
 
--- Create Leaderboard table --
+-- Create the Leaderboard table --
 CREATE TABLE `Leaderboard` (
   `leaderboardId` INT NOT NULL AUTO_INCREMENT,
   `userId` INT NOT NULL,
@@ -103,7 +101,7 @@ INSERT INTO User (username, email, userAvatar, password) VALUES
 ('user4', 'user4@example.com', 'avatar4.png', 'hashedpassword4'),
 ('user5', 'user5@example.com', 'avatar5.png', 'hashedpassword5');
 
--- Now insert data into the Leaderboard table
+-- Insert data into the Leaderboard table
 INSERT INTO Leaderboard (userId, score, rankingDate, gameId) VALUES
 (1, 150, '2022-03-01', 1),
 (2, 125, '2022-03-01', 1),

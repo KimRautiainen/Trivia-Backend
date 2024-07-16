@@ -399,6 +399,19 @@ const putUserAnswer = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+// increase user rank points 
+const putUserRank = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const rankPoints = req.body.rankPoints;
+    const result = await userModel.putUserRank(userId,rankPoints);
+    console.log("result", result);
+    res.status(200).json({ message: "Rank points added" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 
 
 
@@ -419,5 +432,6 @@ const userController = {
   checkUsername,
   checkEmail,
   putUserAnswer,
+  putUserRank,
 };
 module.exports = userController;
