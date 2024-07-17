@@ -113,3 +113,34 @@ INSERT INTO Leaderboard (userId, score, rankingDate, gameId) VALUES
 (3, 150, '2022-03-08', 2),
 (4, 100, '2022-03-08', 2),
 (5, 80,  '2022-03-08', 2);
+
+-- Create tournament questions table
+
+CREATE TABLE `Questions` (
+  `questionId` INT NOT NULL AUTO_INCREMENT,
+  `question` TEXT NOT NULL,
+  `category` VARCHAR(255) NOT NULL,
+  `answerOptions` JSON NOT NULL,
+  `correctAnswer` TEXT NOT NULL,
+  `tag` VARCHAR(255) NOT NULL, 
+  `difficulty` VARCHAR(50) NOT NULL,
+  `regions` TEXT,
+  `type` VARCHAR(50) NOT NULL DEFAULT "text_choice",
+  PRIMARY KEY (`questionId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- associate specific sets of questions with specific tournaments
+ALTER TABLE `Questions`
+ADD `tournamentTag` VARCHAR(255) NOT NULL DEFAULT 'general';
+
+INSERT INTO Questions (question, category, answerOptions, correctAnswer, tag, difficulty, regions, type) VALUES
+('What is the capital of France?', 'Geography', JSON_ARRAY('Paris', 'Berlin', 'Madrid', 'Rome'), 'Paris', 'Europe', 'Easy', 'Western Europe', 'text_choice');
+
+INSERT INTO Questions (question, category, answerOptions, correctAnswer, tag, difficulty, regions, type) VALUES
+('Which planet is known as the Red Planet?', 'Science', JSON_ARRAY('Mars', 'Venus', 'Jupiter', 'Saturn'), 'Mars', 'Space', 'Medium', 'Solar System', 'text_choice');
+
+INSERT INTO Questions (question, category, answerOptions, correctAnswer, tag, difficulty, regions, type) VALUES
+('Who wrote "To Kill a Mockingbird"?', 'Literature', JSON_ARRAY('Harper Lee', 'Mark Twain', 'F. Scott Fitzgerald', 'Ernest Hemingway'), 'Harper Lee', 'Books', 'Medium', 'USA', 'text_choice');
+
+INSERT INTO Questions (question, category, answerOptions, correctAnswer, tag, difficulty, regions, type) VALUES
+('What is the chemical symbol for gold?', 'Science', JSON_ARRAY('Au', 'Ag', 'Pb', 'Fe'), 'Au', 'Elements', 'Hard', 'Periodic Table', 'text_choice');
