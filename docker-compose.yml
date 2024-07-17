@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: kimrauti/sql-image:latest
+    container_name: triviaDatabase
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345
+      MYSQL_DATABASE: triviaDb
+    ports:
+      - "3306:3306"
+    networks:
+      - mynetwork
+
+  backend:
+    image: kimrauti/backend-image:latest
+    container_name: triviaBackend
+    ports:
+      - "3000:3000"
+    environment:
+      DB_HOST: triviaDatabase
+      DB_USER: root
+      DB_PASS: 12345
+      DB_NAME: triviaDb
+    depends_on:
+      - mysql
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:

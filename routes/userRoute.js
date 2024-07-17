@@ -98,7 +98,7 @@ router.put(
       .optional()
       .trim()
       .escape()
-      .isLength({ min: 3, max: 20})
+      .isLength({ min: 3, max: 20 })
       .withMessage("Username must be at least 3 characters long"),
     body("email")
       .optional()
@@ -107,7 +107,7 @@ router.put(
       .normalizeEmail(),
     body("password")
       .optional()
-      .isLength({ min: 5, max: 30})
+      .isLength({ min: 5, max: 30 })
       .withMessage("Password must be at least 5 characters long"),
     // Finally, run the controller function
   ],
@@ -124,13 +124,48 @@ router
   .delete([validatedUserId, authorizeUser], userController.deleteUser);
 // route to add correct / false answer to user
 router.put(
-  "/answers/:userId", 
+  "/answers/:userId",
   [
     validatedUserId,
     authorizeUser,
-    body('correct').optional().isInt({ min: 0 }).withMessage('Correct must be a non-negative integer'),
-    body('falseAnswers').optional().isInt({ min: 0 }).withMessage('False Answers must be a non-negative integer')
-  ], 
+    body("correct")
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage("Correct must be a non-negative integer"),
+    body("falseAnswers")
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage("False Answers must be a non-negative integer"),
+  ],
   userController.putUserAnswer
 );
+// route to add rank points to user
+router.put(
+  "/rank/increase/:userId",
+  [
+    validatedUserId,
+    authorizeUser,
+    body("rankPoints")
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage("Rank Points must be a non-negative integer"),
+  ],
+  userController.putUserRank
+);
+/* // route to decrease rank points to user
+router.put(
+  "/rank/decrease/:userId",
+  [
+    validatedUserId,
+    authorizeUser,
+    body("rankPoints")
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage("Rank Points must be a non-negative integer"),
+  ],
+  userController.putUserRank
+);
+// route to get user rank
+router.get("/rank/:userId", [validatedUserId, authorizeUser], userController.getUserRank); */
+
 module.exports = router;

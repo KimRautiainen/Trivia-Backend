@@ -274,6 +274,19 @@ const putUserAnswer = async (userId, correct, falseAnswer) => {
     throw new Error("sql update user answers failed");
   }
 };
+// add user rank points and check if user rank up
+const putUserRank = async (userId, rankPoints) => {
+  try {
+    const sql = `UPDATE User SET rankPoints=rankPoints+? where userId=?`;
+    const [rows] = await promisePool.query(sql, [rankPoints, userId]);
+    return rows;
+  } catch (e) {
+    console.error("error", e.message);
+    throw new Error("sql update user rank points failed");
+  }
+};
+// check for user rank levelup on rankpoints
+
 
 
 module.exports = {
@@ -295,4 +308,5 @@ module.exports = {
   checkUsername,
   checkEmail,
   putUserAnswer,
+  putUserRank,
 };
