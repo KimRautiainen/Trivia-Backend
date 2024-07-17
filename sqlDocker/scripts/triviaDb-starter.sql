@@ -144,3 +144,19 @@ INSERT INTO Questions (question, category, answerOptions, correctAnswer, tag, di
 
 INSERT INTO Questions (question, category, answerOptions, correctAnswer, tag, difficulty, regions, type) VALUES
 ('What is the chemical symbol for gold?', 'Science', JSON_ARRAY('Au', 'Ag', 'Pb', 'Fe'), 'Au', 'Elements', 'Hard', 'Periodic Table', 'text_choice');
+
+
+-- Create the Inventory table --
+CREATE TABLE `Inventory` (
+  `inventoryId` INT NOT NULL AUTO_INCREMENT,
+  `userId` INT NOT NULL,
+  `goldCoins` INT DEFAULT 0,
+  `tournamentTickets` INT DEFAULT 0,
+  `otherItems` JSON,
+  PRIMARY KEY (`inventoryId`),
+  FOREIGN KEY (`userId`) REFERENCES `User` (`userId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- Insert sample data into the Inventory table --
+INSERT INTO `Inventory` (userId, goldCoins, tournamentTickets, otherItems) VALUES
+(1, 100, 5, JSON_OBJECT('item1', '50', 'item2', '2')),
