@@ -1,21 +1,35 @@
-"use strict";
-const pool = require("../Db");
-const promisePool = pool.promise();
+const { DataTypes } = require("sequelize");
+const sequelize = require("../sequelize");
 
-// get inventory for user
-
-const getInventory = async (userId) => {
-  try {
-    const sql = `
-        SELECT * FROM Inventory WHERE userId = ?
-        `;
-    const [rows] = await promisePool.query(sql, [userId]);
-    return rows;
-  } catch (e) {
-    console.error("error", e.message);
-    throw new error("sql query failed");
+const Inventory = sequelize.define(
+  "Inventory",
+  {
+    inventoryId: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    goldCoins: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    tournamentTickets: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    otherItems: {
+      type: DataTypes.JSON,
+      defaultValue: {},
+    },
+  },
+  {
+    tableName: "Inventory",
+    timestamps: false,
   }
-};
-module.exports = {
-  getInventory,
-};
+);
+
+module.exports = Inventory;

@@ -1,19 +1,23 @@
 "use strict";
 const express = require("express");
 const cors = require("cors");
-const userRoute = require("./routes/userRoute");
 const passport = require("./utils/passport");
+const session = require("express-session");
+require('dotenv').config(); // Load environment variables
+const sequelize = require('./sequelize'); // Import sequelize instance
+
+const userRoute = require("./routes/userRoute");
 const authRoute = require("./routes/authRoute");
 const credientalsRoute = require("./routes/credientalsRoute");
 const leaderboardRoute = require("./routes/leaderboardRoute");
 const questionsRoute = require("./routes/questionsRoute");
 const inventoryRoute = require("./routes/inventoryRoute");
-const session = require("express-session");
+
 const app = express();
 
 // Log middleware
 app.use((req, res, next) => {
-  console.log(Date.now() + ": request: " + req.method + "" + req.path);
+  console.log(Date.now() + ": request: " + req.method + " " + req.path);
   next();
 });
 
@@ -35,21 +39,20 @@ app.use(passport.initialize());
 app.use("/auth", authRoute);
 // Use the userRoute for handling user-related routes under the '/user' endpoint, and require authentication using the JWT strategy.
 app.use("/user", passport.authenticate("jwt", { session: false }), userRoute);
-// route for username/email avialiablity check
+// Route for username/email availability check
 app.use("/check", credientalsRoute);
-// route for leaderboard
-app.use("/leaderboard", require("./routes/leaderboardRoute"));
-// route for quiz questions
-app.use(
-  "/quiz",
-  passport.authenticate("jwt", { session: false }),
-  questionsRoute
-);
-// route for managin inventory
-app.use(
-  "/inventory",
-  passport.authenticate("jwt", { session: false }),
-  inventoryRoute
-);
+// Route for leaderboard
+app.use("/leaderboard", leaderboardRoute);
+// Route for quiz questions
+app.use("/quiz", passport.authenticate("jwt", { session: false }), questionsRoute);
+// Route for managing inventory
+app.use("/inventory", passport.authenticate("jwt", { session: false }), inventoryRoute);
+
+// Sync models with database
+sequelize.sync().then(() => {
+  console.log("Database synchronized");
+}).catch(error => {
+  console.error("Error synchronizing database:", error);
+});
 
 module.exports = app;

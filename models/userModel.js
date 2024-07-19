@@ -4,7 +4,6 @@ const promisePool = pool.promise();
 
 const getAllUsers = async () => {
   try {
-    
     const sql = `
       SELECT 
         userId, 
@@ -68,9 +67,13 @@ const checkEmail = async (email) => {
 };
 
 const insertUser = async (user) => {
+  const connection = await promisePool.getConnection();
+  await connection.beginTransaction();
+
   try {
-    const sql = `INSERT INTO User (username, email, userAvatar, password, experiencePoints, level, maxXp) VALUES (?, ?, ?, ?, ?, ?, ?)`;
-    const [rows] = await promisePool.query(sql, [
+    // Insert user
+    const sqlInsertUser = `INSERT INTO User (username, email, userAvatar, password, experiencePoints, level, maxXp) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+    const [userResult] = await connection.query(sqlInsertUser, [
       user.username,
       user.email,
       user.filename,
@@ -79,10 +82,26 @@ const insertUser = async (user) => {
       user.level,
       user.maxXp,
     ]);
-    return rows;
+
+    const userId = userResult.insertId;
+
+    // Insert default inventory for the user
+    const sqlInsertInventory = `INSERT INTO Inventory (userId, goldCoins, tournamentTickets, otherItems) VALUES (?, ?, ?, ?)`;
+    await connection.query(sqlInsertInventory, [
+      userId,
+      0, // default value for goldCoins
+      0, // default value for tournamentTickets
+      JSON.stringify({}), // default value for otherItems
+    ]);
+
+    await connection.commit();
+    return userResult;
   } catch (e) {
+    await connection.rollback();
     console.error("error", e.message);
     throw new Error("sql insert user failed");
+  } finally {
+    connection.release();
   }
 };
 
@@ -263,11 +282,7 @@ const completeAchievement = async (userId, achievementId) => {
 const putUserAnswer = async (userId, correct, falseAnswer) => {
   try {
     const sql = `UPDATE User SET totalCorrectAnswers=totalCorrectAnswers+?, totalFalseAnswers=totalFalseAnswers+? where userId=?`;
-    const [rows] = await promisePool.query(sql, [
-      correct,
-      falseAnswer,
-      userId,
-    ]);
+    const [rows] = await promisePool.query(sql, [correct, falseAnswer, userId]);
     return rows;
   } catch (e) {
     console.error("error", e.message);
@@ -286,8 +301,6 @@ const putUserRank = async (userId, rankPoints) => {
   }
 };
 // check for user rank levelup on rankpoints
-
-
 
 module.exports = {
   getAllUsers,
