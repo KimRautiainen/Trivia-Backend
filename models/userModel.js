@@ -229,9 +229,11 @@ const getAllAchievements = async () => {
 
 const getUserAchievements = async (userId) => {
   try {
-    const sql = `SELECT a.* FROM UserAchievement ua
-    JOIN Achievement a ON ua.achievementId = a.achievementId
-    WHERE ua.userId = ?`;
+    const sql = `
+      SELECT a.*, ap.progress, ap.isCompleted
+      FROM Achievement a
+      LEFT JOIN AchievementProgress ap ON a.achievementId = ap.achievementId AND ap.userId = ?
+      ORDER BY ap.isCompleted, a.achievementId`;
     const [rows] = await promisePool.query(sql, [userId]);
     return rows;
   } catch (e) {
@@ -239,6 +241,7 @@ const getUserAchievements = async (userId) => {
     throw new Error("sql query failed");
   }
 };
+
 const insertUserAchievement = async (userId, achievementId) => {
   try {
     const sql = `INSERT INTO UserAchievement (userId, achievementId, dateEarned) VALUES (?, ?, NOW())`;
@@ -251,8 +254,7 @@ const insertUserAchievement = async (userId, achievementId) => {
 };
 
 const getAchievementProgress = async (userId, achievementId) => {
-  const sql = `SELECT * FROM AchievementProgress 
-               WHERE userId = ? AND achievementId = ?`;
+  const sql = `SELECT * FROM AchievementProgress WHERE userId = ? AND achievementId = ?`;
   const [rows] = await promisePool.query(sql, [userId, achievementId]);
   return rows[0];
 };
@@ -261,21 +263,34 @@ const updateAchievementProgress = async (userId, achievementId, progress) => {
   const sql = `INSERT INTO AchievementProgress (userId, achievementId, progress)
                VALUES (?, ?, ?)
                ON DUPLICATE KEY UPDATE progress = ?`;
-  const [result] = await promisePool.query(sql, [
-    userId,
-    achievementId,
-    progress,
-    progress,
-  ]);
-  return result;
+  await promisePool.query(sql, [userId, achievementId, progress, progress]);
+  await checkAndAwardAchievements(userId, achievementId); // Check if the achievement is completed after updating progress
 };
 
 const completeAchievement = async (userId, achievementId) => {
-  const sql = `UPDATE AchievementProgress 
-               SET isCompleted = TRUE 
-               WHERE userId = ? AND achievementId = ?`;
+  const sql = `UPDATE AchievementProgress SET isCompleted = TRUE WHERE userId = ? AND achievementId = ?`;
   const [result] = await promisePool.query(sql, [userId, achievementId]);
+  await insertUserAchievement(userId, achievementId); // Automatically insert the completed achievement
   return result;
+};
+
+const checkAndAwardAchievements = async (userId, achievementId) => {
+  try {
+    const sql = `SELECT * FROM Achievement WHERE achievementId = ?`;
+    const [achievementRows] = await promisePool.query(sql, [achievementId]);
+    if (achievementRows.length === 0) {
+      throw new Error("Achievement not found");
+    }
+    const achievement = achievementRows[0];
+
+    const progress = await getAchievementProgress(userId, achievementId);
+    if (progress.progress >= achievement.requirement && !progress.isCompleted) {
+      await completeAchievement(userId, achievementId);
+    }
+  } catch (e) {
+    console.error("error", e.message);
+    throw new Error("failed to check and award achievements");
+  }
 };
 
 // add correct and false answers to User
