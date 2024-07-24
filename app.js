@@ -3,8 +3,8 @@ const express = require("express");
 const cors = require("cors");
 const passport = require("./utils/passport");
 const session = require("express-session");
-require('dotenv').config(); // Load environment variables
-const sequelize = require('./sequelize'); // Import sequelize instance
+require("dotenv").config(); // Load environment variables
+const sequelize = require("./sequelize"); // Import sequelize instance
 
 const userRoute = require("./routes/userRoute");
 const authRoute = require("./routes/authRoute");
@@ -12,6 +12,7 @@ const credientalsRoute = require("./routes/credientalsRoute");
 const leaderboardRoute = require("./routes/leaderboardRoute");
 const questionsRoute = require("./routes/questionsRoute");
 const inventoryRoute = require("./routes/inventoryRoute");
+const friendsRoute = require("./routes/friendsRoute");
 
 const app = express();
 
@@ -44,15 +45,32 @@ app.use("/check", credientalsRoute);
 // Route for leaderboard
 app.use("/leaderboard", leaderboardRoute);
 // Route for quiz questions
-app.use("/quiz", passport.authenticate("jwt", { session: false }), questionsRoute);
+app.use(
+  "/quiz",
+  passport.authenticate("jwt", { session: false }),
+  questionsRoute
+);
 // Route for managing inventory
-app.use("/inventory", passport.authenticate("jwt", { session: false }), inventoryRoute);
+app.use(
+  "/inventory",
+  passport.authenticate("jwt", { session: false }),
+  inventoryRoute
+);
+// Route for managing friends and requests
+app.use(
+  "/friends",
+  passport.authenticate("jwt", { session: false }),
+  friendsRoute
+);
 
 // Sync models with database
-sequelize.sync().then(() => {
-  console.log("Database synchronized");
-}).catch(error => {
-  console.error("Error synchronizing database:", error);
-});
+sequelize
+  .sync()
+  .then(() => {
+    console.log("Database synchronized");
+  })
+  .catch((error) => {
+    console.error("Error synchronizing database:", error);
+  });
 
 module.exports = app;

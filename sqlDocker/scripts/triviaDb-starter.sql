@@ -160,3 +160,24 @@ CREATE TABLE `Inventory` (
 -- Insert sample data into the Inventory table --
 INSERT INTO `Inventory` (userId, goldCoins, tournamentTickets, otherItems) VALUES
 (1, 100, 5, JSON_OBJECT('item1', '50', 'item2', '2')),
+
+-- Friends table 
+CREATE TABLE `Friends` (
+  `userId` INT NOT NULL,
+  `friendId` INT NOT NULL,
+  `dateAdded` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`userId`, `friendId`),
+  FOREIGN KEY(`userId`) REFERENCES `User`(`userId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- Friend request table
+CREATE TABLE `FriendRequests` (
+  `requesterId` INT NOT NULL,
+  `recipientId` INT NOT NULL,
+  `status` ENUM('pending', 'accepted', 'rejected') NOT NULL DEFAULT 'pending',
+  `dateRequested` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `dateResponded` DATETIME DEFAULT NULL,
+  PRIMARY KEY (`requesterId`, `recipientId`),
+  FOREIGN KEY(`requesterId`) REFERENCES `User`(`userId`) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY(`recipientId`) REFERENCES `User`(`userId`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
