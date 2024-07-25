@@ -20,8 +20,8 @@ const sendFriendRequest = async (req, res) => {
 
 // accept or deny friend request
 const respondFriendRequest = async (req, res) => {
-  const requesterId = req.user[0].userId;
-  const recipientId = req.params.recipientId;
+  const recipientId = req.user[0].userId;
+  const requesterId = req.params.recipientId;
   const { status } = req.body;
 
   if (!["accepted", "rejected"].includes(status)) {
@@ -43,7 +43,7 @@ const respondFriendRequest = async (req, res) => {
       await Friends.create({ userId: recipientId, friendId: requesterId });
     }
 
-    res.status(200).json({ message: `Freind request ${status}` });
+    res.status(200).json({ message: `Friend request ${status}` });
   } catch (error) {
     console.error("error responding to friend request", error);
     res.status(500).json({ message: "Internal server error" });
@@ -114,23 +114,25 @@ const removeFriend = async (req, res) => {
 const getUsersFriends = async (req, res) => {
   const userId = req.user[0].userId;
   try {
-    const friends = await Friends.findAll({
-      where: {
-        userId,
-      },
-      include: {
-        model: userModel,
-        attributes: ["userId", "username", "email", "userAvatar"],
-        as: "friendDetails",
-        through: { attributes: [] },
-      },
-    });
-    res.status(200).json(friends.map((friend) => friend.friendDetails));
+    const [friends] = await sequelize.query(
+      `
+      SELECT u.userId, u.username, u.email, u.userAvatar
+      FROM Friends f
+      JOIN User u ON f.friendId = u.userId
+      WHERE f.userId = ?
+      `,
+      {
+        replacements: [userId],
+      }
+    );
+
+    res.status(200).json(friends);
   } catch (error) {
     console.error("Error fetching friends:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 module.exports = {
   sendFriendRequest,
   respondFriendRequest,
