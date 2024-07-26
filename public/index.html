@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Battle</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const socket = io();
+      let token = sessionStorage.getItem('token');
+
+      if (!token) {
+        const email = prompt('Enter your email:');
+        const password = prompt('Enter your password:');
+        
+        const response = await fetch('/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+        
+        if (response.status === 200) {
+          token = data.token;
+          sessionStorage.setItem('token', token);
+        } else {
+          alert('Login failed');
+          return;
+        }
+      }
+
+      const userId = prompt('Enter your user ID:');
+      socket.emit('register', userId);
+
+      const fetchOptions = {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      };
+
+      // Fetch and display user data
+      const user = await fetch(`/user/${userId}`, fetchOptions).then(res => res.json());
+      document.getElementById('user-data').innerText = JSON.stringify(user, null, 2);
+
+      // Fetch and display user's friends
+      const friends = await fetch(`/friends/getFriends`, fetchOptions).then(res => res.json());
+      document.getElementById('friends-list').innerHTML = friends.map(friend => `
+        <li>${friend.username} (${friend.email})</li>
+      `).join('');
+
+      document.getElementById('challenge').addEventListener('click', () => {
+        const challengedId = prompt('Enter the ID of the friend you want to challenge:');
+        socket.emit('challenge', { challengerId: userId, challengedId });
+      });
+
+      socket.on('receiveChallenge', ({ challengerId }) => {
+        if (confirm(`You have been challenged by ${challengerId}. Accept?`)) {
+          socket.emit('acceptChallenge', { challengerId, challengedId: userId });
+        }
+      });
+
+      socket.on('challengeAccepted', ({ challengerId, challengedId, roomId }) => {
+        console.log(`Battle started in room ${roomId}`);
+        document.getElementById('battle').innerText = `Battle started with ${challengerId || challengedId}`;
+      });
+
+      document.getElementById('answer').addEventListener('click', () => {
+        const answer = prompt('Enter your answer:');
+        const roomId = document.getElementById('battle').innerText.split(' ')[3];
+        socket.emit('quizAnswer', { roomId, userId, answer });
+      });
+
+      socket.on('receiveAnswer', ({ userId, answer }) => {
+        console.log(`User ${userId} answered: ${answer}`);
+        document.getElementById('answers').innerText += `\n${userId}: ${answer}`;
+      });
+    });
+  </script>
+</head>
+<body>
+  <h1>Quiz Battle</h1>
+  <h2>User Data</h2>
+  <pre id="user-data"></pre>
+  <h2>Friends List</h2>
+  <ul id="friends-list"></ul>
+  <button id="challenge">Challenge a Friend</button>
+  <div id="battle"></div>
+  <button id="answer">Submit Answer</button>
+  <pre id="answers"></pre>
+</body>
+</html>
