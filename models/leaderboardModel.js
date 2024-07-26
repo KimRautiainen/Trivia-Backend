@@ -6,7 +6,7 @@ const promisePool = pool.promise();
 
 const getLeaderboard = async () => {
   try {
-    const sql = `SELECT * FROM LEADERBOARD ORDER BY SCORE DESC LIMIT 10`;
+    const sql = `SELECT * FROM Leaderboard ORDER BY score DESC LIMIT 10`;
     const [rows] = await promisePool.query(sql);
     return rows;
   } catch (e) {
@@ -16,7 +16,7 @@ const getLeaderboard = async () => {
 };
 const getLeaderboardById = async (id) => {
   try {
-    const sql = `SELECT * FROM LEADERBOARD WHERE userId = ?`;
+    const sql = `SELECT * FROM Leaderboard WHERE userId = ?`;
     const [rows] = await promisePool.query(sql, [id]);
     return rows;
   } catch (e) {
@@ -28,7 +28,7 @@ const getHighscore = async (userId) => {
     try {
         const sql = `
             SELECT userId, gameId, MAX(score) as highscore
-            FROM LEADERBOARD 
+            FROM Leaderboard
             WHERE userId = ?
             GROUP BY gameId`;
         const [rows] = await promisePool.query(sql, [userId]);
@@ -41,7 +41,7 @@ const getHighscore = async (userId) => {
 const updateHighscore = async (userId, gameId, newScore) => {
     try {
         // Check if a record with the same userId and gameId exists
-        const checkSql = 'SELECT score FROM LEADERBOARD WHERE userId = ? AND gameId = ?';
+        const checkSql = 'SELECT score FROM Leaderboard WHERE userId = ? AND gameId = ?';
         const [checkRows] = await promisePool.query(checkSql, [userId, gameId]);
 
         if (checkRows.length === 0 || newScore > checkRows[0].score) {
@@ -52,14 +52,14 @@ const updateHighscore = async (userId, gameId, newScore) => {
             if (checkRows.length === 0) {
                 // Insert a new score if no record exists
                 const insertSql = `
-                    INSERT INTO LEADERBOARD (userId, gameId, score, rankingDate)
+                    INSERT INTO Leaderboard (userId, gameId, score, rankingDate)
                     VALUES (?, ?, ?, ?)`;
                 const [insertRows] = await promisePool.query(insertSql, [userId, gameId, newScore, formattedDate]);
                 return insertRows;
             } else {
                 // Update the score if newScore is higher
                 const updateSql = `
-                    UPDATE LEADERBOARD
+                    UPDATE Leaderboard
                     SET score = ?, rankingDate = ?
                     WHERE userId = ? AND gameId = ?`;
                 const [updateRows] = await promisePool.query(updateSql, [newScore, formattedDate, userId, gameId]);
