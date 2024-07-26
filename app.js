@@ -26,7 +26,7 @@ app.use((req, res, next) => {
 app.use(cors());
 
 // Serve example-ui
-
+/* app.use(express.static("public")); */
 // Serve image files
 app.use("/uploads", express.static("uploads"));
 
