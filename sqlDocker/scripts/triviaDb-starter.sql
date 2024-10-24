@@ -61,8 +61,8 @@ INSERT INTO `Achievement` (name, description, icon, requirement) VALUES
 CREATE TABLE `AchievementProgress` (
   `userId` INT NOT NULL,
   `achievementId` INT NOT NULL,
-  `progress` INT DEFAULT 0,
-  `isCompleted` BOOLEAN DEFAULT FALSE,
+  `progress` INT DEFAULT 0 NOT NULL,
+  `isCompleted` BOOLEAN DEFAULT FALSE NOT NULL,
   PRIMARY KEY (`userId`, `achievementId`),
   FOREIGN KEY (`userId`) REFERENCES `User` (`userId`),
   FOREIGN KEY (`achievementId`) REFERENCES `Achievement` (`achievementId`)
