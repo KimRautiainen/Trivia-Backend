@@ -35,7 +35,9 @@ const getUserById = async (id) => {
       level, 
       maxXp, 
       totalCorrectAnswers, 
-      totalFalseAnswers 
+      totalFalseAnswers,
+      rankPoints,
+      rankLevel 
     FROM User where userId=?
   `;
     const [rows] = await promisePool.query(sql, [id]);
