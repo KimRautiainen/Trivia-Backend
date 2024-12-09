@@ -13,6 +13,7 @@ const leaderboardRoute = require("./routes/leaderboardRoute");
 const questionsRoute = require("./routes/questionsRoute");
 const inventoryRoute = require("./routes/inventoryRoute");
 const friendsRoute = require("./routes/friendsRoute");
+const skillsRoute = require("./routes/skillsRoute");
 
 const app = express();
 
@@ -61,6 +62,11 @@ app.use(
   "/friends",
   passport.authenticate("jwt", { session: false }),
   friendsRoute
+);
+// Route for user game skills /stats
+app.use(
+  "/skills",
+  skillsRoute
 );
 
 // Sync models with database

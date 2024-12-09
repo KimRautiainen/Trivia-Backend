@@ -309,15 +309,49 @@ const putUserAnswer = async (userId, correct, falseAnswer) => {
 // add user rank points and check if user rank up
 const putUserRank = async (userId, rankPoints) => {
   try {
-    const sql = `UPDATE User SET rankPoints=rankPoints+? where userId=?`;
-    const [rows] = await promisePool.query(sql, [rankPoints, userId]);
-    return rows;
-  } catch (e) {
-    console.error("error", e.message);
-    throw new Error("sql update user rank points failed");
+    // Update the user's rank points
+    const updatePointsSql = `UPDATE User SET rankPoints = rankPoints + ? WHERE userId = ?`;
+    await promisePool.query(updatePointsSql, [rankPoints, userId]);
+
+    // Get the user's current rank and rank points
+    const getUserSql = `SELECT rankPoints, rankLevel FROM User WHERE userId = ?`;
+    const [user] = await promisePool.query(getUserSql, [userId]);
+
+    if (!user.length) throw new Error("User not found");
+
+    const { rankPoints: updatedRankPoints, rankLevel: currentRankLevel } = user[0];
+
+    // Fetch rank thresholds from the Rank table
+    const getRanksSql = `SELECT rankLevel, minPoints, maxPoints FROM Rank ORDER BY rankLevel`;
+    const [ranks] = await promisePool.query(getRanksSql);
+
+    // Determine the user's new rank level
+    let newRankLevel = currentRankLevel;
+
+    for (const rank of ranks) {
+      if (updatedRankPoints >= rank.minPoints && updatedRankPoints <= rank.maxPoints) {
+        newRankLevel = rank.rankLevel;
+        break;
+      }
+    }
+
+    // Update the user's rank level if it has changed
+    if (newRankLevel !== currentRankLevel) {
+      const updateRankSql = `UPDATE User SET rankLevel = ? WHERE userId = ?`;
+      await promisePool.query(updateRankSql, [newRankLevel, userId]);
+    }
+
+    return {
+      userId,
+      updatedRankPoints,
+      newRankLevel,
+    };
+  } catch (error) {
+    console.error("Error in putUserRank:", error.message);
+    throw new Error("Failed to update user rank and points");
   }
 };
-// check for user rank levelup on rankpoints
+
 
 module.exports = {
   getAllUsers,

@@ -182,3 +182,16 @@ CREATE TABLE `FriendRequests` (
   FOREIGN KEY(`requesterId`) REFERENCES `User` (`userId`) ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY(`recipientId`) REFERENCES `User` (`userId`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- Skills for users to each category so players can level categories as stats and other players
+-- sees what is the best categories for opponent for example
+CREATE TABLE `UserGameStats` (
+  `userId` INT NOT NULL,
+  `category` VARCHAR(255) NOT NULL,
+  `correctAnswers` INT DEFAULT 0,
+  `wrongAnswers` INT DEFAULT 0,
+  `totalQuestions` INT AS (correctAnswers + wrongAnswers) PERSISTENT,
+  `skillLevel` DECIMAL(10, 2) AS (correctAnswers / NULLIF(totalQuestions, 0)) PERSISTENT,
+  PRIMARY KEY (`userId`, `category`),
+  FOREIGN KEY (`userId`) REFERENCES `User` (`userId`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
