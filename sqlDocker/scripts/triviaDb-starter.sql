@@ -190,8 +190,8 @@ CREATE TABLE `UserGameStats` (
   `category` VARCHAR(255) NOT NULL,
   `correctAnswers` INT DEFAULT 0,
   `wrongAnswers` INT DEFAULT 0,
-  `totalQuestions` INT AS (correctAnswers + wrongAnswers) PERSISTENT,
-  `skillLevel` DECIMAL(10, 2) AS (correctAnswers / NULLIF(totalQuestions, 0)) PERSISTENT,
+  `totalQuestions` INT AS (correctAnswers + wrongAnswers) STORED,
+  `skillLevel` DECIMAL(10, 2) AS (correctAnswers / NULLIF(totalQuestions, 0)) STORED,
   PRIMARY KEY (`userId`, `category`),
   FOREIGN KEY (`userId`) REFERENCES `User` (`userId`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
