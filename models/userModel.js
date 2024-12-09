@@ -322,7 +322,7 @@ const putUserRank = async (userId, rankPoints) => {
     const { rankPoints: updatedRankPoints, rankLevel: currentRankLevel } = user[0];
 
     // Fetch rank thresholds from the Rank table
-    const getRanksSql = `SELECT rankLevel, minPoints, maxPoints FROM Rank ORDER BY rankLevel`;
+    const getRanksSql = `SELECT rankLevel, minPoints, maxPoints FROM \`Rank\` ORDER BY rankLevel`;
     const [ranks] = await promisePool.query(getRanksSql);
 
     // Determine the user's new rank level
@@ -351,6 +351,7 @@ const putUserRank = async (userId, rankPoints) => {
     throw new Error("Failed to update user rank and points");
   }
 };
+
 
 
 module.exports = {
