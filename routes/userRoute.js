@@ -120,7 +120,7 @@ router.get("/token", userController.checkToken);
 // Get user by id and delete user
 router
   .route("/:userId")
-  .get([validatedUserId, authorizeUser], userController.getUser)
+  .get([validatedUserId], userController.getUser)
   .delete([validatedUserId, authorizeUser], userController.deleteUser);
 // route to add correct / false answer to user
 router.put(
