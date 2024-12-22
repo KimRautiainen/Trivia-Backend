@@ -14,6 +14,7 @@ const questionsRoute = require("./routes/questionsRoute");
 const inventoryRoute = require("./routes/inventoryRoute");
 const friendsRoute = require("./routes/friendsRoute");
 const skillsRoute = require("./routes/skillsRoute");
+const eventsRoute = require("./routes/eventsRoute");
 
 const app = express();
 
@@ -26,8 +27,6 @@ app.use((req, res, next) => {
 // Add cors headers using cors middleware
 app.use(cors());
 
-// Serve example-ui
-/* app.use(express.static("public")); */
 // Serve image files
 app.use("/uploads", express.static("uploads"));
 
@@ -69,6 +68,12 @@ app.use(
   skillsRoute
 );
 
+// Route for events 
+app.use(
+  "/events",
+  passport.authenticate("jwt", { session: false }),
+  eventsRoute
+);
 // Sync models with database
 sequelize
   .sync()

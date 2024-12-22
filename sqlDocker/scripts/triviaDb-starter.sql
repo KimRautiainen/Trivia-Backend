@@ -195,3 +195,24 @@ CREATE TABLE `UserGameStats` (
   PRIMARY KEY (`userId`, `category`),
   FOREIGN KEY (`userId`) REFERENCES `User` (`userId`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `Events` (
+  `eventId` INT NOT NULL AUTO_INCREMENT,
+  `eventName` VARCHAR(255) NOT NULL,
+  `category` VARCHAR(255) NOT NULL,
+  `difficulty` ENUM('Easy', 'Medium', 'Hard') NOT NULL,
+  `participated` BOOLEAN DEFAULT FALSE, 
+  `startDate` DATETIME NOT NULL, 
+  `endDate` DATETIME DEFAULT NULL, 
+  `reward` JSON DEFAULT NULL, 
+  `maxParticipants` INT DEFAULT NULL, 
+  `currentParticipants` INT DEFAULT 0, 
+  `isActive` BOOLEAN DEFAULT TRUE, 
+  `description` TEXT DEFAULT NULL, 
+  `createdBy` INT DEFAULT NULL, 
+  `tournamentTag` VARCHAR(255) DEFAULT NULL, 
+  `entryCost` INT DEFAULT 0, 
+  `requiredRankLevel` INT DEFAULT 1, 
+  PRIMARY KEY (`eventId`),
+  FOREIGN KEY (`createdBy`) REFERENCES `User` (`userId`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
