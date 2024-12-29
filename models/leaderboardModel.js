@@ -1,7 +1,6 @@
 "use strict";
 const pool = require("../Db");
 const promisePool = pool.promise();
-
 // Leaderboard modules
 
 const getLeaderboard = async () => {

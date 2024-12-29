@@ -213,6 +213,31 @@ CREATE TABLE `Events` (
   `tournamentTag` VARCHAR(255) DEFAULT NULL, 
   `entryCost` INT DEFAULT 0, 
   `requiredRankLevel` INT DEFAULT 1, 
+  `questionsCount` INT DEFAULT 10, 
   PRIMARY KEY (`eventId`),
   FOREIGN KEY (`createdBy`) REFERENCES `User` (`userId`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- Tracks players waiting for a match.
+CREATE TABLE MatchmakingPool (
+  playerId INT NOT NULL,
+  rankPoints INT NOT NULL,
+  connectedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (playerId),
+  FOREIGN KEY (playerId) REFERENCES User (userId) ON DELETE CASCADE
+);
+
+-- Tracks active game sessions.
+CREATE TABLE GameSession (
+  sessionId INT NOT NULL AUTO_INCREMENT,
+  player1Id INT NOT NULL,
+  player2Id INT NOT NULL,
+  player1Score INT DEFAULT 0,
+  player2Score INT DEFAULT 0,
+  gameStatus ENUM('waiting', 'active', 'completed', 'forfeited') DEFAULT 'waiting',
+  winnerId INT DEFAULT NULL,
+  startedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (sessionId),
+  FOREIGN KEY (player1Id) REFERENCES User (userId) ON DELETE CASCADE,
+  FOREIGN KEY (player2Id) REFERENCES User (userId) ON DELETE CASCADE
+);

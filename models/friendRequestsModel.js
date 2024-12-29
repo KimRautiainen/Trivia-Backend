@@ -1,5 +1,5 @@
 const { DataTypes } = require("sequelize");
-const sequelize = require("../sequelize"); // Adjust the path as necessary
+const sequelize = require("../sequelize"); 
 
 const FriendRequests = sequelize.define(
   "FriendRequests",
