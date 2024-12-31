@@ -1,71 +1,149 @@
 const pool = require("../Db");
 const promisePool = pool.promise();
 
-// MatchmakingPool operations
+// -- MATCHMAKINGPOOL OPERATIONS -- //
+
 const addPlayerToMatchmakingPool = async (playerId, rankPoints) => {
-  try {
-    const sql = `INSERT INTO MatchmakingPool (playerId, rankPoints) VALUES (?, ?)`;
-    await promisePool.query(sql, [playerId, rankPoints]);
-  } catch (error) {
-    console.error("Failed to add player to matchmaking pool:", error.message);
-  }
+  const sql = `INSERT INTO MatchmakingPool (playerId, rankPoints) VALUES (?, ?)`;
+  await promisePool.query(sql, [playerId, rankPoints]);
 };
 
 const removePlayerFromMatchmakingPool = async (playerId) => {
-  try {
-    const sql = `DELETE FROM MatchmakingPool WHERE playerId = ?`;
-    await promisePool.query(sql, [playerId]);
-  } catch (error) {
-    console.error("Failed to remove player from matchmaking pool:", error.message);
-  }
+  const sql = `DELETE FROM MatchmakingPool WHERE playerId = ?`;
+  await promisePool.query(sql, [playerId]);
 };
 
 const fetchMatchmakingPool = async () => {
-  try {
-    const sql = `SELECT * FROM MatchmakingPool ORDER BY connectedAt`;
-    const [rows] = await promisePool.query(sql);
-    return rows;
-  } catch (error) {
-    console.error("Failed to fetch matchmaking pool:", error.message);
-    return [];
-  }
+  const sql = `SELECT * FROM MatchmakingPool ORDER BY connectedAt`;
+  const [rows] = await promisePool.query(sql);
+  return rows;
 };
 
-// GameSession operations
+// -- GAMESESSION OPERATIONS -- //
+
 const createGameSession = async (player1Id, player2Id) => {
+  const sql = `INSERT INTO GameSession (player1Id, player2Id, gameStatus) VALUES (?, ?, 'active')`;
+  const [result] = await promisePool.query(sql, [player1Id, player2Id]);
+  return result.insertId;
+};
+
+const getGameSessionById = async (sessionId) => {
+  const sql = `SELECT * FROM GameSession WHERE sessionId = ?`;
+  const [rows] = await promisePool.query(sql, [sessionId]);
+  if (!rows.length) {
+    throw new Error("Game session not found");
+  }
+  return rows[0];
+};
+
+const updateGameScore = async (sessionId, playerId, increment) => {
   try {
-    const sql = `INSERT INTO GameSession (player1Id, player2Id, gameStatus) VALUES (?, ?, 'active')`;
-    const [result] = await promisePool.query(sql, [player1Id, player2Id]);
-    return result.insertId;
+    // Get the game session to determine if playerId is player1 or player2
+    const sqlGetSession = `SELECT player1Id, player2Id FROM GameSession WHERE sessionId = ?`;
+    const [session] = await promisePool.query(sqlGetSession, [sessionId]);
+
+    if (!session.length) {
+      throw new Error("Game session not found");
+    }
+
+    const { player1Id, player2Id } = session[0];
+
+    // Determine which player's score to update
+    let scoreColumn;
+    if (playerId === player1Id) {
+      scoreColumn = "player1Score";
+    } else if (playerId === player2Id) {
+      scoreColumn = "player2Score";
+    } else {
+      throw new Error("Player does not belong to this game session");
+    }
+
+    // Update the correct score column
+    const sqlUpdateScore = `UPDATE GameSession SET ${scoreColumn} = ${scoreColumn} + ? WHERE sessionId = ?`;
+    await promisePool.query(sqlUpdateScore, [increment, sessionId]);
   } catch (error) {
-    console.error("Failed to create game session:", error.message);
+    console.error("Failed to update game score:", error.message);
     throw error;
   }
 };
-
-const updateGameScore = async (sessionId, playerId, newScore) => {
-  try {
-    const scoreColumn = `player${playerId === 1 ? "1" : "2"}Score`;
-    const sql = `UPDATE GameSession SET ${scoreColumn} = ? WHERE sessionId = ?`;
-    await promisePool.query(sql, [newScore, sessionId]);
-  } catch (error) {
-    console.error("Failed to update game score:", error.message);
-  }
-};
-
 const endGameSession = async (sessionId, winnerId) => {
-  try {
-    const sql = `UPDATE GameSession SET gameStatus = 'completed', winnerId = ? WHERE sessionId = ?`;
-    await promisePool.query(sql, [winnerId, sessionId]);
-  } catch (error) {
-    console.error("Failed to end game session:", error.message);
-  }
+  const sql = `UPDATE GameSession SET gameStatus = 'completed', winnerId = ? WHERE sessionId = ?`;
+  await promisePool.query(sql, [winnerId, sessionId]);
 };
+
+// -- GAMEQUESTIONS OPERATIONS -- //
+
+const saveQuestionsToGame = async (questions) => {
+  const sql = `
+    INSERT INTO GameQuestions (gameId, question, correctAnswer, options, category, difficulty, questionOrder)
+    VALUES ?`;
+
+  const values = questions.map((q) => [
+    q.gameId,
+    q.question,
+    q.correctAnswer,
+    JSON.stringify(q.options),
+    q.category,
+    q.difficulty,
+    q.order,
+  ]);
+
+  await promisePool.query(sql, [values]);
+};
+
+const fetchQuestionsForGame = async (gameId) => {
+  const sql = `SELECT * FROM GameQuestions WHERE gameId = ? ORDER BY questionOrder ASC`;
+  const [rows] = await promisePool.query(sql, [gameId]);
+  return rows;
+};
+
+const trackAnsweredQuestion = async (gameId, questionOrder, userId) => {
+  const sql = `
+    UPDATE GameQuestions 
+    SET answeredBy = IF(answeredBy IS NULL, ?, CONCAT(answeredBy, ',', ?))
+    WHERE gameId = ? AND questionOrder = ?`;
+  await promisePool.query(sql, [userId, userId, gameId, questionOrder]);
+};
+
+const countAnsweredQuestions = async (gameId) => {
+  const sql = `
+    SELECT COUNT(*) AS answeredQuestions 
+    FROM GameQuestions 
+    WHERE gameId = ? AND answeredBy IS NOT NULL`;
+  const [result] = await promisePool.query(sql, [gameId]);
+  return result[0].answeredQuestions;
+};
+
+const countAnsweredQuestionsByUser = async (gameId, userId) => {
+  const sql = `
+    SELECT COUNT(*) AS answeredQuestions 
+    FROM GameQuestions 
+    WHERE gameId = ? AND FIND_IN_SET(?, answeredBy)`;
+  const [rows] = await promisePool.query(sql, [gameId, userId]);
+  return rows[0].answeredQuestions;
+};
+
+const countTotalQuestions = async (gameId) => {
+  const sql = `
+    SELECT COUNT(*) AS totalQuestions 
+    FROM GameQuestions 
+    WHERE gameId = ?`;
+  const [result] = await promisePool.query(sql, [gameId]);
+  return result[0].totalQuestions;
+};
+
 module.exports = {
   addPlayerToMatchmakingPool,
   removePlayerFromMatchmakingPool,
   fetchMatchmakingPool,
   createGameSession,
+  getGameSessionById,
   updateGameScore,
   endGameSession,
+  saveQuestionsToGame,
+  fetchQuestionsForGame,
+  trackAnsweredQuestion,
+  countAnsweredQuestions,
+  countTotalQuestions,
+  countAnsweredQuestionsByUser,
 };

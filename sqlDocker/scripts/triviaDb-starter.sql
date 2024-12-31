@@ -241,3 +241,18 @@ CREATE TABLE GameSession (
   FOREIGN KEY (player1Id) REFERENCES User (userId) ON DELETE CASCADE,
   FOREIGN KEY (player2Id) REFERENCES User (userId) ON DELETE CASCADE
 );
+
+
+CREATE TABLE GameQuestions (
+  gameQuestionId INT NOT NULL AUTO_INCREMENT,
+  gameId INT NOT NULL,
+  question TEXT NOT NULL,
+  correctAnswer TEXT NOT NULL,
+  options JSON NOT NULL,
+  category VARCHAR(255) NOT NULL,
+  difficulty VARCHAR(50) NOT NULL,
+  answeredBy TEXT DEFAULT NULL,
+  questionOrder INT NOT NULL,
+  PRIMARY KEY (gameQuestionId),
+  FOREIGN KEY (gameId) REFERENCES GameSession (sessionId)
+);

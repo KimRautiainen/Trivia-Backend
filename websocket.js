@@ -8,9 +8,16 @@ const {
   removePlayerFromMatchmakingPool,
   fetchMatchmakingPool,
   createGameSession,
+  getGameSessionById,
   updateGameScore,
   endGameSession,
+  saveQuestionsToGame,
+  fetchQuestionsForGame,
+  countAnsweredQuestionsByUser,
+  countTotalQuestions,
+  trackAnsweredQuestion,
 } = require("./models/matchmakingModel");
+const axios = require("axios");
 
 const webSocketMap = new Map(); // Maps userId to WebSocket connection
 
@@ -20,7 +27,7 @@ const initializeWebSocket = (server) => {
     verifyClient: (info, done) => {
       try {
         const token = getTokenFromRequest(info.req);
-        const decoded = jwt.verify(token, process.env.JWT_SECRET); 
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         info.req.user = decoded; // Attach user information to the request
         done(true);
       } catch (err) {
@@ -69,6 +76,9 @@ const handleWebSocketMessage = async (ws, data, user) => {
     case "answer_question":
       await handleAnswerQuestion(data.payload, user.userId);
       break;
+    case "end_match":
+      await handleEndMatch(data.payload.gameId);
+      break;
     case "leave_matchmaking":
       await handleLeaveMatchmaking(user.userId);
       break;
@@ -104,7 +114,6 @@ const attemptMatch = async (pool) => {
 
     const [player1, player2] = pool.slice(0, 2);
 
-    // Ensure players are close in rank
     if (Math.abs(player1.rankPoints - player2.rankPoints) > 200) return;
 
     await Promise.all([
@@ -114,29 +123,28 @@ const attemptMatch = async (pool) => {
 
     const gameId = await createGameSession(player1.playerId, player2.playerId);
 
+    // Fetch and save questions for the match
+    const questions = await generateQuestionsForGame(gameId);
+
     // Retrieve WebSocket connections
     const player1Ws = webSocketMap.get(player1.playerId);
     const player2Ws = webSocketMap.get(player2.playerId);
 
-    if (!player1Ws || !player2Ws) {
-      console.error("WebSocket connection missing for one of the players.");
-      return;
-    }
-
     // Notify players
-    if (player1Ws.readyState === WebSocket.OPEN) {
+    if (player1Ws && player1Ws.readyState === WebSocket.OPEN) {
       player1Ws.send(
         JSON.stringify({
           type: "match_found",
-          payload: { gameId, opponent: player2.playerId },
+          payload: { gameId, opponent: player2.playerId, questions },
         })
       );
     }
-    if (player2Ws.readyState === WebSocket.OPEN) {
+
+    if (player2Ws && player2Ws.readyState === WebSocket.OPEN) {
       player2Ws.send(
         JSON.stringify({
           type: "match_found",
-          payload: { gameId, opponent: player1.playerId },
+          payload: { gameId, opponent: player1.playerId, questions },
         })
       );
     }
@@ -147,14 +155,178 @@ const attemptMatch = async (pool) => {
   }
 };
 
-const handleAnswerQuestion = async ({ gameId, isCorrect }, userId) => {
+const generateQuestionsForGame = async (gameId, questionCount = 10) => {
   try {
-    const increment = isCorrect ? 1 : 0;
-    await updateGameScore(gameId, userId, increment);
+    // Fetch questions from the Trivia API
+    const response = await axios.get(
+      "https://the-trivia-api.com/v2/questions",
+      {
+        params: { limit: questionCount },
+      }
+    );
 
-    console.log(`Updated score for user ${userId} in game ${gameId}`);
+    const questions = response.data;
+
+    // Map the questions to a format that includes the gameId and order
+    const mappedQuestions = questions.map((q, index) => ({
+      gameId,
+      question: q.question.text,
+      correctAnswer: q.correctAnswer,
+      incorrectAnswers: q.incorrectAnswers,
+      options: [...q.incorrectAnswers, q.correctAnswer].sort(
+        () => Math.random() - 0.5
+      ), // Randomize options
+      category: q.category,
+      difficulty: q.difficulty,
+      order: index,
+    }));
+
+    // Save questions to your database (e.g., GameQuestions table)
+    await saveQuestionsToGame(mappedQuestions);
+
+    return mappedQuestions;
+  } catch (error) {
+    console.error(
+      "Error fetching questions from the Trivia API:",
+      error.message
+    );
+    throw new Error("Failed to generate questions for the game.");
+  }
+};
+
+const handleAnswerQuestion = async (
+  { gameId, questionOrder, answer },
+  userId
+) => {
+  try {
+    // Fetch questions for the game
+    const gameQuestions = await fetchQuestionsForGame(gameId);
+
+    // Find the specific question
+    const question = gameQuestions.find(
+      (q) => q.questionOrder === questionOrder
+    );
+    if (!question) {
+      throw new Error("Question not found");
+    }
+
+    // Check if the answer is correct
+    const isCorrect = question.correctAnswer === answer;
+
+    // Update game score
+    await updateGameScore(gameId, userId, isCorrect ? 1 : 0);
+
+    // Track the answered question
+    await trackAnsweredQuestion(gameId, questionOrder, userId);
+
+    // Notify both players about the answer result
+    const game = await getGameSessionById(gameId);
+    const player1Ws = webSocketMap.get(game.player1Id);
+    const player2Ws = webSocketMap.get(game.player2Id);
+
+    const feedbackMessage = JSON.stringify({
+      type: "answer_feedback",
+      payload: {
+        userId,
+        questionOrder,
+        isCorrect,
+        correctAnswer: question.correctAnswer, // Include correct answer for reference
+      },
+    });
+
+    if (player1Ws && player1Ws.readyState === WebSocket.OPEN) {
+      player1Ws.send(feedbackMessage);
+    }
+
+    if (player2Ws && player2Ws.readyState === WebSocket.OPEN) {
+      player2Ws.send(feedbackMessage);
+    }
+
+    console.log(
+      `User ${userId} answered question in game ${gameId}. Correct: ${isCorrect}`
+    );
+
+    // Count answered questions for each player
+    const player1Answered = await countAnsweredQuestionsByUser(
+      gameId,
+      game.player1Id
+    );
+    const player2Answered = await countAnsweredQuestionsByUser(
+      gameId,
+      game.player2Id
+    );
+
+    const totalQuestions = await countTotalQuestions(gameId);
+
+    // End the game only when both players have answered all questions
+    if (
+      player1Answered >= totalQuestions &&
+      player2Answered >= totalQuestions
+    ) {
+      console.log("All players have answered all questions. Ending match.");
+      await handleEndMatch(gameId);
+    }
   } catch (error) {
     console.error("Error handling answer question:", error.message);
+  }
+};
+const handleEndMatch = async (gameId) => {
+  try {
+    const game = await getGameSessionById(gameId);
+    if (!game) {
+      console.error("Game session not found:", gameId);
+      return;
+    }
+
+    const { player1Id, player2Id, player1Score, player2Score } = game;
+
+    let winnerId = null;
+    if (player1Score > player2Score) {
+      winnerId = player1Id;
+    } else if (player2Score > player1Score) {
+      winnerId = player2Id;
+    }
+
+    // Update game session status and winner
+    await endGameSession(gameId, winnerId);
+
+    // Update high scores
+    await updateHighscore(player1Id, gameId, player1Score);
+    await updateHighscore(player2Id, gameId, player2Score);
+
+    // Notify players
+    const player1Ws = webSocketMap.get(player1Id);
+    const player2Ws = webSocketMap.get(player2Id);
+
+    if (player1Ws && player1Ws.readyState === WebSocket.OPEN) {
+      player1Ws.send(
+        JSON.stringify({
+          type: "game_ended",
+          payload: {
+            gameId,
+            winner: winnerId,
+            scores: { player1Score, player2Score },
+          },
+        })
+      );
+    }
+
+    if (player2Ws && player2Ws.readyState === WebSocket.OPEN) {
+      player2Ws.send(
+        JSON.stringify({
+          type: "game_ended",
+          payload: {
+            gameId,
+            winner: winnerId,
+            scores: { player1Score, player2Score },
+          },
+        })
+      );
+    }
+
+    console.log(`Game ${gameId} ended. Winner: ${winnerId}`);
+  } catch (error) {
+    console.error("Error ending match:", error.message);
   }
 };
 
@@ -167,6 +339,7 @@ const handleLeaveMatchmaking = async (userId) => {
   }
 };
 
+// TODO: Handle disconnect and try to connect user back to match and after x amount of time handle leave matchmaking
 const handleDisconnect = async (ws, userId) => {
   try {
     await handleLeaveMatchmaking(userId);
