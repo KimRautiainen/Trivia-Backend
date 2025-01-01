@@ -26,7 +26,10 @@ const initializeWebSocket = (server) => {
     server,
     verifyClient: (info, done) => {
       try {
-        const token = getTokenFromRequest(info.req);
+        const token = info.req.headers["sec-websocket-protocol"];
+        if (!token) {
+          throw new Error("No token provided");
+        }
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         info.req.user = decoded; // Attach user information to the request
         done(true);

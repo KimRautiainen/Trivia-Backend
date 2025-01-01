@@ -6,23 +6,23 @@ const player1Token =
 const player2Token =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsInVzZXJuYW1lIjoiTmlpbG8yMiIsImVtYWlsIjoibmlpbG9AMjIuZmkiLCJ1c2VyQXZhdGFyIjoiMWZkNjAyNGNhM2VhZGM4OTFkMDllZmMyNGU4NDQzYjIiLCJwYXNzd29yZCI6IiQyYSQxMCQycXZueWhlbkV0TzBEamNvQ3lOTTBla0Q1QzdITmFQMkVEaTA3Z2hxMUd2cFVYMUZJWGZELiIsImV4cGVyaWVuY2VQb2ludHMiOjAsImxldmVsIjoxLCJtYXhYcCI6MTAwLCJ0b3RhbENvcnJlY3RBbnN3ZXJzIjowLCJ0b3RhbEZhbHNlQW5zd2VycyI6MCwicmFua1BvaW50cyI6MCwicmFua0xldmVsIjoxLCJpYXQiOjE3MzU2NDYzNjV9.kDdBL-m54moSFz_eDZKDcHca-EY10x6r49Enh55_6Og"; // Replace with Player 2 JWT
 
-let questions = []; // Store questions shared between both players
-let gameId = null;
+let questions = []; // Shared questions between players
+let gameId = null; // Shared game ID
 
 // Helper to simulate answering questions
 const answerQuestions = async (ws, userId) => {
   for (let i = 0; i < questions.length; i++) {
     const question = questions[i];
-
     const payload = {
       type: "answer_question",
       payload: {
         gameId,
-        questionOrder: question.questionOrder,
+        questionOrder: question.order, // Question order from API
         answer: question.correctAnswer, // Always choose the correct answer
       },
     };
 
+    console.log(`User ${userId} answering question ${question.order}`);
     ws.send(JSON.stringify(payload));
 
     // Wait a bit before sending the next answer
@@ -30,13 +30,12 @@ const answerQuestions = async (ws, userId) => {
   }
 };
 
-const connectPlayer = (token, onMessage) => {
-  const ws = new WebSocket(serverUrl, {
-    headers: { "Sec-WebSocket-Protocol": token },
-  });
+// Helper to connect a player
+const connectPlayer = (token, userId, onMessage) => {
+  const ws = new WebSocket(serverUrl, [token]);
 
   ws.on("open", () => {
-    console.log("Connected to WebSocket server");
+    console.log(`Player ${userId} connected to WebSocket server`);
 
     // Join matchmaking
     ws.send(
@@ -47,20 +46,24 @@ const connectPlayer = (token, onMessage) => {
     );
   });
 
-  ws.on("message", (data) => {
+  ws.on("message", async (data) => {
     const message = JSON.parse(data);
-    console.log("Message received:", message);
+    console.log(`Player ${userId} received:`, message);
 
     if (message.type === "match_found") {
       gameId = message.payload.gameId;
-      questions = message.payload.questions; // Save questions for later
+      questions = message.payload.questions; // Save questions
     }
 
-    if (onMessage) onMessage(ws, message);
+    if (onMessage) await onMessage(ws, message);
   });
 
   ws.on("close", () => {
-    console.log("WebSocket connection closed");
+    console.log(`Player ${userId} WebSocket connection closed`);
+  });
+
+  ws.on("error", (err) => {
+    console.error(`Player ${userId} encountered error:`, err.message);
   });
 
   return ws;
@@ -68,15 +71,15 @@ const connectPlayer = (token, onMessage) => {
 
 // Simulate two players connecting and answering all questions
 (async () => {
-  const player1 = connectPlayer(player1Token, async (ws, message) => {
+  const player1 = connectPlayer(player1Token, 1, async (ws, message) => {
     if (message.type === "match_found") {
-      await answerQuestions(ws, 1); // Simulate Player 1 answering all questions
+      await answerQuestions(ws, 1); // Simulate Player 1 answering
     }
   });
 
-  const player2 = connectPlayer(player2Token, async (ws, message) => {
+  const player2 = connectPlayer(player2Token, 2, async (ws, message) => {
     if (message.type === "match_found") {
-      await answerQuestions(ws, 2); // Simulate Player 2 answering all questions
+      await answerQuestions(ws, 2); // Simulate Player 2 answering
     }
   });
 
