@@ -206,9 +206,7 @@ const handleAnswerQuestion = async (
     const gameQuestions = await fetchQuestionsForGame(gameId);
 
     // Find the specific question
-    const question = gameQuestions.find(
-      (q) => q.questionOrder === questionOrder
-    );
+    const question = gameQuestions.find((q) => q.order === questionOrder);
     if (!question) {
       throw new Error("Question not found");
     }
@@ -222,32 +220,51 @@ const handleAnswerQuestion = async (
     // Track the answered question
     await trackAnsweredQuestion(gameId, questionOrder, userId);
 
-    // Notify both players about the answer result
+    // Fetch the updated game session
     const game = await getGameSessionById(gameId);
     const player1Ws = webSocketMap.get(game.player1Id);
     const player2Ws = webSocketMap.get(game.player2Id);
 
+    // Send feedback to both players
     const feedbackMessage = JSON.stringify({
       type: "answer_feedback",
       payload: {
         userId,
         questionOrder,
         isCorrect,
-        correctAnswer: question.correctAnswer, // Include correct answer for reference
+        correctAnswer: question.correctAnswer,
       },
     });
 
     if (player1Ws && player1Ws.readyState === WebSocket.OPEN) {
       player1Ws.send(feedbackMessage);
     }
-
     if (player2Ws && player2Ws.readyState === WebSocket.OPEN) {
       player2Ws.send(feedbackMessage);
     }
 
     console.log(
-      `User ${userId} answered question in game ${gameId}. Correct: ${isCorrect}`
+      `User ${userId} answered question ${questionOrder} in game ${gameId}. Correct: ${isCorrect}`
     );
+
+    // Broadcast updated scores
+    const scoresMessage = JSON.stringify({
+      type: "score_update",
+      payload: {
+        gameId,
+        scores: {
+          player1Score: game.player1Score,
+          player2Score: game.player2Score,
+        },
+      },
+    });
+
+    if (player1Ws && player1Ws.readyState === WebSocket.OPEN) {
+      player1Ws.send(scoresMessage);
+    }
+    if (player2Ws && player2Ws.readyState === WebSocket.OPEN) {
+      player2Ws.send(scoresMessage);
+    }
 
     // Count answered questions for each player
     const player1Answered = await countAnsweredQuestionsByUser(
@@ -261,18 +278,36 @@ const handleAnswerQuestion = async (
 
     const totalQuestions = await countTotalQuestions(gameId);
 
-    // End the game only when both players have answered all questions
-    if (
-      player1Answered >= totalQuestions &&
-      player2Answered >= totalQuestions
-    ) {
-      console.log("All players have answered all questions. Ending match.");
-      await handleEndMatch(gameId);
+    // If both players have answered the current question, move to the next one
+    if (player1Answered + player2Answered === 2 * (questionOrder + 1)) {
+      const nextQuestion = gameQuestions.find(
+        (q) => q.order === questionOrder + 1
+      );
+
+      if (nextQuestion) {
+        const nextQuestionMessage = JSON.stringify({
+          type: "next_question",
+          payload: {
+            question: nextQuestion,
+          },
+        });
+
+        if (player1Ws && player1Ws.readyState === WebSocket.OPEN) {
+          player1Ws.send(nextQuestionMessage);
+        }
+        if (player2Ws && player2Ws.readyState === WebSocket.OPEN) {
+          player2Ws.send(nextQuestionMessage);
+        }
+      } else {
+        console.log("No more questions. Ending match.");
+        await handleEndMatch(gameId);
+      }
     }
   } catch (error) {
     console.error("Error handling answer question:", error.message);
   }
 };
+
 const handleEndMatch = async (gameId) => {
   try {
     const game = await getGameSessionById(gameId);
