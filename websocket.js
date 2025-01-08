@@ -204,9 +204,10 @@ const handleAnswerQuestion = async (
   try {
     // Fetch questions for the game
     const gameQuestions = await fetchQuestionsForGame(gameId);
+    console.log("Game Questions : ", gameQuestions);
 
     // Find the specific question
-    const question = gameQuestions.find((q) => q.order === questionOrder);
+    const question = gameQuestions.find((q) => q.questionOrder === questionOrder);
     if (!question) {
       throw new Error("Question not found");
     }
@@ -281,7 +282,7 @@ const handleAnswerQuestion = async (
     // If both players have answered the current question, move to the next one
     if (player1Answered + player2Answered === 2 * (questionOrder + 1)) {
       const nextQuestion = gameQuestions.find(
-        (q) => q.order === questionOrder + 1
+        (q) => q.questionOrder === questionOrder + 1
       );
 
       if (nextQuestion) {
