@@ -204,10 +204,11 @@ const handleAnswerQuestion = async (
   try {
     // Fetch questions for the game
     const gameQuestions = await fetchQuestionsForGame(gameId);
-    console.log("Game Questions : ", gameQuestions);
 
     // Find the specific question
-    const question = gameQuestions.find((q) => q.questionOrder === questionOrder);
+    const question = gameQuestions.find(
+      (q) => q.questionOrder === questionOrder
+    );
     if (!question) {
       throw new Error("Question not found");
     }
@@ -254,6 +255,8 @@ const handleAnswerQuestion = async (
       payload: {
         gameId,
         scores: {
+          player1Id: game.player1Id, 
+          player2Id: game.player2Id, 
           player1Score: game.player1Score,
           player2Score: game.player2Score,
         },
