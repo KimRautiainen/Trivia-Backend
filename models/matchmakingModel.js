@@ -131,6 +131,33 @@ const countTotalQuestions = async (gameId) => {
   const [result] = await promisePool.query(sql, [gameId]);
   return result[0].totalQuestions;
 };
+const getGameSessionByUserId = async (userId) => {
+  const sql = `
+    SELECT 
+      sessionId,
+      player1Id,
+      player2Id,
+      player1Score,
+      player2Score,
+      gameStatus,
+      winnerId,
+      startedAt
+    FROM 
+      GameSession
+    WHERE 
+      (player1Id = ? OR player2Id = ?) 
+      AND gameStatus = 'active'
+    LIMIT 1;
+  `;
+
+  try {
+    const [rows] = await promisePool.query(sql, [userId, userId]);
+    return rows.length > 0 ? rows[0] : null; // Return the first row if found, else null
+  } catch (error) {
+    console.error("Error fetching game session by user ID:", error.message);
+    throw new Error("Database query failed");
+  }
+};
 
 module.exports = {
   addPlayerToMatchmakingPool,
@@ -146,4 +173,5 @@ module.exports = {
   countAnsweredQuestions,
   countTotalQuestions,
   countAnsweredQuestionsByUser,
+  getGameSessionByUserId,
 };

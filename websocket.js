@@ -16,10 +16,12 @@ const {
   countAnsweredQuestionsByUser,
   countTotalQuestions,
   trackAnsweredQuestion,
+  getGameSessionByUserId,
 } = require("./models/matchmakingModel");
 const axios = require("axios");
 
 const webSocketMap = new Map(); // Maps userId to WebSocket connection
+const disconnectTimeouts = new Map(); // To track disconnection timeouts
 
 const initializeWebSocket = (server) => {
   const wss = new WebSocket.Server({
@@ -46,6 +48,9 @@ const initializeWebSocket = (server) => {
 
     // Add WebSocket connection to the map
     webSocketMap.set(user.userId, ws);
+
+    // Handle reconnection if applicable
+    handleReconnect(ws, user.userId);
 
     ws.on("message", (message) => {
       const data = JSON.parse(message);
@@ -255,8 +260,8 @@ const handleAnswerQuestion = async (
       payload: {
         gameId,
         scores: {
-          player1Id: game.player1Id, 
-          player2Id: game.player2Id, 
+          player1Id: game.player1Id,
+          player2Id: game.player2Id,
           player1Score: game.player1Score,
           player2Score: game.player2Score,
         },
@@ -381,13 +386,95 @@ const handleLeaveMatchmaking = async (userId) => {
   }
 };
 
-// TODO: Handle disconnect and try to connect user back to match and after x amount of time handle leave matchmaking
 const handleDisconnect = async (ws, userId) => {
   try {
-    await handleLeaveMatchmaking(userId);
-    console.log(`User ${userId} disconnected`);
+    const game = await getGameSessionByUserId(userId); // Fetch the game session the user is in
+    if (!game) {
+      console.log(`User ${userId} disconnected but no active game.`);
+      await handleLeaveMatchmaking(userId); // Remove from matchmaking pool
+      return;
+    }
+
+    const { player1Id, player2Id } = game;
+    const opponentId = player1Id === userId ? player2Id : player1Id;
+
+    console.log(
+      `User ${userId} disconnected. Notifying opponent (${opponentId}).`
+    );
+
+    const opponentWs = webSocketMap.get(opponentId);
+    if (opponentWs && opponentWs.readyState === WebSocket.OPEN) {
+      opponentWs.send(
+        JSON.stringify({
+          type: "player_disconnected",
+          payload: { opponentId: userId },
+        })
+      );
+    }
+
+    // Start a timer to wait for the disconnected user to reconnect
+    const timeout = setTimeout(async () => {
+      console.log(
+        `User ${userId} did not reconnect. Ending game ${game.gameId}.`
+      );
+
+      // End the game and declare the opponent as the winner
+      const winnerId = opponentId;
+      await endGameSession(game.gameId, winnerId);
+
+      if (opponentWs && opponentWs.readyState === WebSocket.OPEN) {
+        opponentWs.send(
+          JSON.stringify({
+            type: "game_ended",
+            payload: {
+              gameId: game.gameId,
+              winner: winnerId,
+              scores: {
+                player1Score: game.player1Score,
+                player2Score: game.player2Score,
+              },
+            },
+          })
+        );
+      }
+
+      webSocketMap.delete(userId); // Remove disconnected user from map
+    }, 30000); // Wait 30 seconds
+
+    disconnectTimeouts.set(userId, timeout);
   } catch (error) {
     console.error("Error handling disconnect:", error.message);
+  }
+};
+
+const handleReconnect = async (ws, userId) => {
+  try {
+    if (disconnectTimeouts.has(userId)) {
+      clearTimeout(disconnectTimeouts.get(userId));
+      disconnectTimeouts.delete(userId);
+
+      console.log(`User ${userId} reconnected.`);
+      const game = await getGameSessionByUserId(userId);
+
+      if (game) {
+        const opponentId =
+          game.player1Id === userId ? game.player2Id : game.player1Id;
+        const opponentWs = webSocketMap.get(opponentId);
+
+        if (opponentWs && opponentWs.readyState === WebSocket.OPEN) {
+          opponentWs.send(
+            JSON.stringify({
+              type: "player_reconnected",
+              payload: { opponentId: userId },
+            })
+          );
+        }
+      }
+    } else {
+      console.log(`User ${userId} reconnected but no active disconnection.`);
+    }
+  } catch (error) {
+    console.error("Error handling reconnect:", error.message);
   }
 };
 
