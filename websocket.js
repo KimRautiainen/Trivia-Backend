@@ -45,6 +45,7 @@ const initializeWebSocket = (server) => {
   wss.on("connection", (ws, req) => {
     const user = req.user; // Extract user info from the request
     console.log("Player connected:", user.userId);
+    console.log("user from req.user: ", user);
 
     // Add WebSocket connection to the map
     webSocketMap.set(user.userId, ws);
