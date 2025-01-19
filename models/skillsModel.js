@@ -1,6 +1,7 @@
 "use strict";
 const pool = require("../Db");
 const promisePool = pool.promise();
+// -- Model for all skills of user. Skills are correct / incorrect answer ratio of a category, showcasing how good user is in that category
 
 // Update or insert stats for a category
 const updateCategoryStats = async (userId, category, isCorrect) => {

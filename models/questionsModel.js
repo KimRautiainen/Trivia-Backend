@@ -2,7 +2,7 @@
 const pool = require("../Db");
 const promisePool = pool.promise();
 
-// get questions with tournament tag
+// get questions with tournament tag to correctly show question assigned to that tournament / event
 const getQuestionsWithTournamentTag = async (tournamentTag) => {
     try{
         const sql = `

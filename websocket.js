@@ -1,7 +1,7 @@
 const WebSocket = require("ws");
 const jwt = require("jsonwebtoken");
-const matchmakingPool = [];
-const activeGames = {};
+const matchmakingPool = []; // Pool of players waiting for matchmaking
+const activeGames = {}; // Active games being tracked
 const { updateHighscore } = require("./models/leaderboardModel");
 const {
   addPlayerToMatchmakingPool,
@@ -23,11 +23,13 @@ const axios = require("axios");
 const webSocketMap = new Map(); // Maps userId to WebSocket connection
 const disconnectTimeouts = new Map(); // To track disconnection timeouts
 
+// Initialize WebSocket server
 const initializeWebSocket = (server) => {
   const wss = new WebSocket.Server({
     server,
     verifyClient: (info, done) => {
       try {
+        // Extract and verify the JWT token from headers
         const token = info.req.headers["sec-websocket-protocol"];
         if (!token) {
           throw new Error("No token provided");
@@ -53,11 +55,13 @@ const initializeWebSocket = (server) => {
     // Handle reconnection if applicable
     handleReconnect(ws, user.userId);
 
+    // Listen for incoming messages from the client
     ws.on("message", (message) => {
       const data = JSON.parse(message);
       handleWebSocketMessage(ws, data, user); // Pass user info to handlers
     });
 
+    // Handle WebSocket disconnection
     ws.on("close", () => {
       console.log("Player disconnected");
       webSocketMap.delete(user.userId); // Remove from WebSocket map
@@ -68,7 +72,7 @@ const initializeWebSocket = (server) => {
   console.log("WebSocket server initialized");
 };
 
-// Helper function to extract token from the request
+// Extract the JWT token from the WebSocket request headers
 const getTokenFromRequest = (req) => {
   const authHeader = req.headers["sec-websocket-protocol"];
   if (!authHeader) {
@@ -77,6 +81,7 @@ const getTokenFromRequest = (req) => {
   return authHeader;
 };
 
+// Handle incoming WebSocket messages based on their type
 const handleWebSocketMessage = async (ws, data, user) => {
   switch (data.type) {
     case "join_matchmaking":
@@ -96,14 +101,15 @@ const handleWebSocketMessage = async (ws, data, user) => {
   }
 };
 
+// Add the player to the matchmaking pool and attempt to find a match
 const handleJoinMatchmaking = async (ws, userId, rankPoints) => {
   try {
     await addPlayerToMatchmakingPool(userId, rankPoints);
     console.log(`User ${userId} joined matchmaking`);
 
-    const pool = await fetchMatchmakingPool();
+    const pool = await fetchMatchmakingPool(); // Get the current pool of players
     console.log("Matchmaking pool:", pool); // Debugging log
-    await attemptMatch(pool);
+    await attemptMatch(pool); // Try to create a match
   } catch (error) {
     console.error("Error joining matchmaking:", error.message);
     if (ws && ws.readyState === WebSocket.OPEN) {
@@ -117,19 +123,23 @@ const handleJoinMatchmaking = async (ws, userId, rankPoints) => {
   }
 };
 
+// Attempt to match players from the matchmaking pool
 const attemptMatch = async (pool) => {
   try {
-    if (pool.length < 2) return;
+    if (pool.length < 2) return; // Need at least two players to create a match
 
     const [player1, player2] = pool.slice(0, 2);
 
+    // Ensure players have similar rank points
     if (Math.abs(player1.rankPoints - player2.rankPoints) > 200) return;
 
+    // Remove matched players from the pool
     await Promise.all([
       removePlayerFromMatchmakingPool(player1.playerId),
       removePlayerFromMatchmakingPool(player2.playerId),
     ]);
 
+    // Create a new game session
     const gameId = await createGameSession(player1.playerId, player2.playerId);
 
     // Fetch and save questions for the match
@@ -164,6 +174,7 @@ const attemptMatch = async (pool) => {
   }
 };
 
+// Generate trivia questions for the game session
 const generateQuestionsForGame = async (gameId, questionCount = 10) => {
   try {
     // Fetch questions from the Trivia API
@@ -202,7 +213,7 @@ const generateQuestionsForGame = async (gameId, questionCount = 10) => {
     throw new Error("Failed to generate questions for the game.");
   }
 };
-
+// Handle a player's answer to a question
 const handleAnswerQuestion = async (
   { gameId, questionOrder, answer },
   userId
@@ -318,6 +329,7 @@ const handleAnswerQuestion = async (
   }
 };
 
+// Handle ending match
 const handleEndMatch = async (gameId) => {
   try {
     const game = await getGameSessionById(gameId);
@@ -378,15 +390,17 @@ const handleEndMatch = async (gameId) => {
   }
 };
 
+// Handle when user leaves a match
 const handleLeaveMatchmaking = async (userId) => {
   try {
-    await removePlayerFromMatchmakingPool(userId);
+    await removePlayerFromMatchmakingPool(userId); // Remove player from matchmaking pool
     console.log(`User ${userId} left matchmaking`);
   } catch (error) {
     console.error("Error leaving matchmaking:", error.message);
   }
 };
 
+// Handle user disconnection
 const handleDisconnect = async (ws, userId) => {
   try {
     const game = await getGameSessionByUserId(userId); // Fetch the game session the user is in
@@ -448,20 +462,29 @@ const handleDisconnect = async (ws, userId) => {
   }
 };
 
+// Handle user reconnection to the WebSocket server
 const handleReconnect = async (ws, userId) => {
   try {
+    // Check if the user has an active disconnection timeout
     if (disconnectTimeouts.has(userId)) {
+      // Clear the disconnection timeout as the user has reconnected
       clearTimeout(disconnectTimeouts.get(userId));
       disconnectTimeouts.delete(userId);
 
       console.log(`User ${userId} reconnected.`);
+
+      // Retrieve the game session associated with the user
       const game = await getGameSessionByUserId(userId);
 
       if (game) {
+        // Identify the opponent's user ID
         const opponentId =
           game.player1Id === userId ? game.player2Id : game.player1Id;
+
+        // Fetch the WebSocket connection for the opponent
         const opponentWs = webSocketMap.get(opponentId);
 
+        // Notify the opponent about the user's reconnection if they are online
         if (opponentWs && opponentWs.readyState === WebSocket.OPEN) {
           opponentWs.send(
             JSON.stringify({
@@ -475,6 +498,7 @@ const handleReconnect = async (ws, userId) => {
       console.log(`User ${userId} reconnected but no active disconnection.`);
     }
   } catch (error) {
+    // Log any errors encountered during the reconnection handling
     console.error("Error handling reconnect:", error.message);
   }
 };

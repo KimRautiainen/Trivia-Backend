@@ -9,6 +9,8 @@ const player2Token =
 let questions = []; // Shared questions between players
 let gameId = null; // Shared game ID
 
+// -- Test simulates 2 players answering all questions correctly, Testing lifecycle of live match -- //
+
 // Helper to simulate answering questions
 const answerQuestions = async (ws, userId) => {
   for (let i = 0; i < questions.length; i++) {

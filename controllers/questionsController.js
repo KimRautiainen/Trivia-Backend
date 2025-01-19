@@ -5,7 +5,6 @@ const validationResult = require("express-validator");
 
 
 // get questions with tournament tag
-
 const getQuestionsWithTournamentTag = async (req,res) => {
    
     try{

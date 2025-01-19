@@ -1,6 +1,7 @@
 # Leaderboard Ids
 
-| ID | aika |
+
+| ID | Mode |
 | :--|:---------|
 | 1  | Ranked   | 
 

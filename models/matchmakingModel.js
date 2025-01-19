@@ -3,16 +3,19 @@ const promisePool = pool.promise();
 
 // -- MATCHMAKINGPOOL OPERATIONS -- //
 
+// add player to matchmaking pool table
 const addPlayerToMatchmakingPool = async (playerId, rankPoints) => {
   const sql = `INSERT INTO MatchmakingPool (playerId, rankPoints) VALUES (?, ?)`;
   await promisePool.query(sql, [playerId, rankPoints]);
 };
 
+// Remove player from matchmaking pool table
 const removePlayerFromMatchmakingPool = async (playerId) => {
   const sql = `DELETE FROM MatchmakingPool WHERE playerId = ?`;
   await promisePool.query(sql, [playerId]);
 };
 
+// get matchmaking pool from database and order entries by connection time
 const fetchMatchmakingPool = async () => {
   const sql = `SELECT * FROM MatchmakingPool ORDER BY connectedAt`;
   const [rows] = await promisePool.query(sql);
@@ -21,12 +24,14 @@ const fetchMatchmakingPool = async () => {
 
 // -- GAMESESSION OPERATIONS -- //
 
+// Create game session for 2 players 
 const createGameSession = async (player1Id, player2Id) => {
   const sql = `INSERT INTO GameSession (player1Id, player2Id, gameStatus) VALUES (?, ?, 'active')`;
   const [result] = await promisePool.query(sql, [player1Id, player2Id]);
   return result.insertId;
 };
 
+// Get game session with session id
 const getGameSessionById = async (sessionId) => {
   const sql = `SELECT * FROM GameSession WHERE sessionId = ?`;
   const [rows] = await promisePool.query(sql, [sessionId]);
@@ -36,6 +41,7 @@ const getGameSessionById = async (sessionId) => {
   return rows[0];
 };
 
+// Update game scores for a game 
 const updateGameScore = async (sessionId, playerId, increment) => {
   try {
     // Get the game session to determine if playerId is player1 or player2
@@ -66,6 +72,8 @@ const updateGameScore = async (sessionId, playerId, increment) => {
     throw error;
   }
 };
+
+// Set game status to completed to end match and store game data correctly
 const endGameSession = async (sessionId, winnerId) => {
   const sql = `UPDATE GameSession SET gameStatus = 'completed', winnerId = ? WHERE sessionId = ?`;
   await promisePool.query(sql, [winnerId, sessionId]);

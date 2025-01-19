@@ -1,8 +1,8 @@
 const multer = require("multer");
 const { validationResult, body } = require("express-validator");
 
-// Define your multer upload configuration
-// This assumes you have a fileFilter function defined somewhere
+// multer upload configuration
+
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ["image/png", "image/jpeg"];
   if (allowedTypes.includes(file.mimetype)) {

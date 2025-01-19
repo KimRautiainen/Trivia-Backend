@@ -2,6 +2,7 @@
 const pool = require("../Db");
 const promisePool = pool.promise();
 
+// Get all users from database
 const getAllUsers = async () => {
   try {
     const sql = `
@@ -24,6 +25,7 @@ const getAllUsers = async () => {
   }
 };
 
+// Get user with user id 
 const getUserById = async (id) => {
   try {
     const sql = `
@@ -47,6 +49,7 @@ const getUserById = async (id) => {
     throw new Error("sql query failed");
   }
 };
+// Check if username is available from database
 const checkUsername = async (username) => {
   try {
     const sql = `SELECT * FROM User WHERE username = ?`;
@@ -57,6 +60,7 @@ const checkUsername = async (username) => {
     throw new Error("sql query failed");
   }
 };
+// Check if email is available from database
 const checkEmail = async (email) => {
   try {
     const sql = `SELECT * FROM User WHERE email = ?`;
@@ -68,6 +72,7 @@ const checkEmail = async (email) => {
   }
 };
 
+// Create a new user
 const insertUser = async (user) => {
   const connection = await promisePool.getConnection();
   await connection.beginTransaction();
@@ -107,6 +112,7 @@ const insertUser = async (user) => {
   }
 };
 
+// modify user details
 const modifyUser = async (userId, userUpdates) => {
   try {
     // Start with the base SQL query
@@ -135,6 +141,7 @@ const modifyUser = async (userId, userUpdates) => {
   }
 };
 
+// Delete user from database
 const deleteUser = async (id) => {
   try {
     const sql = `DELETE FROM User where userId=?`;
@@ -146,6 +153,7 @@ const deleteUser = async (id) => {
   }
 };
 
+// Get user data with email
 const getUserLogin = async (email) => {
   try {
     console.log(email);
@@ -160,8 +168,8 @@ const getUserLogin = async (email) => {
   }
 };
 
-// User Level Models
-
+// -- User Level Models -- //
+// get users level with userid
 const getUserLevel = async (userId) => {
   try {
     const sql = `SELECT level FROM User WHERE userId=?`;
@@ -176,9 +184,11 @@ const getUserLevel = async (userId) => {
 // add experience points to user and check if user level up
 const addUserXp = async (userId, xp) => {
   try {
+    // add experience points (xp)
     const sql = `UPDATE User SET experiencePoints=experiencePoints+? where userId=?`;
     const [rows] = await promisePool.query(sql, [xp, userId]);
-    checkLevelUp(userId);
+    // After adding xp check if user can level up
+    checkLevelUp(userId); 
     return rows;
   } catch (e) {
     console.error("error", e.message);
@@ -190,6 +200,7 @@ const addUserXp = async (userId, xp) => {
 const checkLevelUp = async (userId) => {
   try {
     console.log("checkLevelUp: ");
+    // Get level data
     const sqlQuery = `SELECT experiencePoints, level, maxXp FROM User WHERE userId=?`;
     const [rows] = await promisePool.query(sqlQuery, [userId]);
     let row = rows[0];

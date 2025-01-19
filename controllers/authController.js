@@ -4,13 +4,15 @@ const passport = require("passport");
 require("dotenv").config();
 const { validationResult } = require('express-validator');
 
+// -- Login function -- //
 const login = (req, res) => {
-    const errors = validationResult(req);
+    const errors = validationResult(req); // Check validation results 
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
     }
 
     console.log("login req.body", req.body);
+    // authenticate user
     passport.authenticate('local', {session: false}, (err, user, info) => {
         if (err || !user) {
             console.log("info: ", info);

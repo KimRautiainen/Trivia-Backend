@@ -1,8 +1,10 @@
 "use strict";
 const pool = require("../Db");
 const promisePool = pool.promise();
-// Leaderboard modules
 
+// -- Leaderboard modules -- //
+
+// Get 10 highest score leaderboard entries from database 
 const getLeaderboard = async () => {
   try {
     const sql = `SELECT * FROM Leaderboard ORDER BY score DESC LIMIT 10`;
@@ -13,6 +15,8 @@ const getLeaderboard = async () => {
     throw new Error("sql query failed");
   }
 };
+
+// Get leaderboard entries for user with user id
 const getLeaderboardById = async (id) => {
   try {
     const sql = `SELECT * FROM Leaderboard WHERE userId = ?`;
@@ -23,6 +27,8 @@ const getLeaderboardById = async (id) => {
     throw new Error("sql query failed");
   }
 };
+
+// Get leaderboard highscore entries for user for all gamemodes
 const getHighscore = async (userId) => {
     try {
         const sql = `
@@ -37,6 +43,7 @@ const getHighscore = async (userId) => {
         throw new Error("sql query failed");
     }
 };
+// Update users highscore 
 const updateHighscore = async (userId, gameId, newScore) => {
     try {
         // Check if a record with the same userId and gameId exists

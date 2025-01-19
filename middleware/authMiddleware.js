@@ -1,3 +1,5 @@
+// Authorize user function for checking if the requester user id is same as the requested users id 
+// Use in routes to prevent getting data for user that is not the requester user
 const authorizeUser = (req, res, next) => {
   if (!req.user) {
     return res.status(400).json({ message: "Bad Request: User not found in request" });
