@@ -225,7 +225,7 @@ CREATE TABLE MatchmakingPool (
   connectedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (playerId),
   FOREIGN KEY (playerId) REFERENCES User (userId) ON DELETE CASCADE
-);
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- Tracks active game sessions.
 CREATE TABLE GameSession (
@@ -240,7 +240,7 @@ CREATE TABLE GameSession (
   PRIMARY KEY (sessionId),
   FOREIGN KEY (player1Id) REFERENCES User (userId) ON DELETE CASCADE,
   FOREIGN KEY (player2Id) REFERENCES User (userId) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 CREATE TABLE GameQuestions (
@@ -255,4 +255,34 @@ CREATE TABLE GameQuestions (
   questionOrder INT NOT NULL,
   PRIMARY KEY (gameQuestionId),
   FOREIGN KEY (gameId) REFERENCES GameSession (sessionId)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- Table for game quests
+CREATE TABLE Quests (
+  `quest_id` INT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(255) NOT NULL,
+  `description` TEXT NOT NULL,
+  `type` ENUM('daily', 'weekly', 'monthly') NOT NULL,
+  `requirements` JSON NOT NULL,
+  `reward` VARCHAR(255) NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `expires_at` TIMESTAMP NOT NULL,
+  PRIMARY KEY (quest_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE User_Quests (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT NOT NULL, -- Foreign Key to User table
+  `quest_id` INT NOT NULL, -- Foreign Key to Quests table
+  `progress` JSON NOT NULL, -- Tracks progress (e.g., {"answered": 5})
+  `completed` BOOLEAN DEFAULT FALSE, -- Whether the quest is completed
+  `completion_date` TIMESTAMP NULL, -- When the quest was completed
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (`user_id`) REFERENCES User(`userId`) ON DELETE CASCADE,
+  FOREIGN KEY (`quest_id`) REFERENCES Quests(`quest_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE INDEX idx_user_quests_user_id ON User_Quests(user_id);
+CREATE INDEX idx_user_quests_quest_id ON User_Quests(quest_id);
+CREATE INDEX idx_quests_type ON Quests(type);
